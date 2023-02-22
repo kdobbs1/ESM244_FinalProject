@@ -1,7 +1,7 @@
 library(shiny)
 library(tidyverse)
 library(here)
-fish_info<-read_csv(here("data", "fish_info.csv"))
+fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
 
 ui <- fluidPage(
   navbarPage("My app name",
