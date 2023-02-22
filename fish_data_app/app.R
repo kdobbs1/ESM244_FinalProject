@@ -59,7 +59,8 @@ server <- function(input, output) {
   
   fish_info_reactive <- reactive({
     fish_info %>% 
-      filter(species %in% input$pick_species)
+      filter(species %in% input$pick_species) %>% 
+      filter(stressor %in% input$input_stressor)
   })
   
   output$fish_info_reactive <- renderPlot(
