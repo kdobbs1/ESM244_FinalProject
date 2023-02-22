@@ -92,7 +92,7 @@ server <- function(input, output) {
       filter(stressor %in% input$input_stressor)
   })
   
-  output$table<-renderTable()
+ # output$table<-renderTable()
 }
 
 shinyApp(ui = ui, server = server)
