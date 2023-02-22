@@ -5,16 +5,16 @@ fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
 
 ui <- fluidPage(
   navbarPage("My app name",
-             tabPanel("Tab 1",
+             tabPanel("Info",
                       sidebarLayout(
                         sidebarPanel(
                           titlePanel("Title Here"),
                           #Select species
-                            checkboxGroupInput(inputId = "pick_species",
+                          radioButtons(inputId = "pick_species",
                                                 label = "Choose species:",
                                                 choices = unique(fish_info$species)),
                           #Select stressor
-                            checkboxGroupInput(inputId = "pick_stressor",
+                          radioButtons(inputId = "pick_stressor",
                                                 label = "Choose stressor:",
                                                 choices = unique(fish_info$stressor))
                                         ),
@@ -24,7 +24,7 @@ ui <- fluidPage(
                         
                       )
                     ),
-             tabPanel("Tab 2",
+             tabPanel("Plotting",
                       sidebarLayout(
                         sidebarPanel("WIDGETS",
                                         checkboxGroupInput(inputId = "pick_stressor",
@@ -38,10 +38,10 @@ ui <- fluidPage(
                         
                       )
                       ),
-             tabPanel("Tab 3", 
+             tabPanel("Mapping", 
                       sidebarLayout(
                         sidebarPanel ("WIDGETS",
-                                        checkboxGroupInput(inputId = "pick_species",
+                                        selectInput(inputId = "pick_species",
                                                            label = "Choose species:",
                                                            choices = unique(fish_info$species)
                                         )
@@ -51,7 +51,21 @@ ui <- fluidPage(
                         
                         
                       )
+                      ),
+             tabPanel("Summary Table", 
+                      sidebarLayout(
+                        sidebarPanel ("WIDGETS",
+                                      checkboxGroupInput(inputId = "pick_species",
+                                                         label = "Choose species:",
+                                                         choices = unique(fish_info$species)
+                                      )
+                        ),
+                        
+                        mainPanel = ("OUTPUT!")
+                        
+                        
                       )
+             )
   )
 )
 
