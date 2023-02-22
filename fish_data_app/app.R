@@ -26,7 +26,7 @@ ui <- fluidPage(
                     ),
              tabPanel("Tab 2",
                       sidebarLayout(
-                        sidebarPanel = ("WIDGETS",
+                        sidebarPanel("WIDGETS",
                                         checkboxGroupInput(inputId = "pick_stressor",
                                                            label = "Choose stressor:",
                                                            choices = unique(fish_info$stressor)
@@ -40,7 +40,7 @@ ui <- fluidPage(
                       ),
              tabPanel("Tab 3", 
                       sidebarLayout(
-                        sidebarPanel = ("WIDGETS",
+                        sidebarPanel ("WIDGETS",
                                         checkboxGroupInput(inputId = "pick_species",
                                                            label = "Choose species:",
                                                            choices = unique(fish_info$species)
