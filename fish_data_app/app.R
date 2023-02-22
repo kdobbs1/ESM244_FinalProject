@@ -27,10 +27,12 @@ ui <- fluidPage(
              tabPanel("Plotting",
                       sidebarLayout(
                         sidebarPanel("WIDGETS",
-                                        checkboxGroupInput(inputId = "pick_stressor",
-                                                           label = "Choose stressor:",
-                                                           choices = unique(fish_info$stressor)
-                                        )
+                                        checkboxGroupInput(inputId = "pick_species",
+                                                           label = "Choose species:",
+                                                           choices = unique(fish_info$species)),
+                                     checkboxGroupInput(inputId = "pick_stressor",
+                                                        label = "Choose stressor:",
+                                                        choices = unique(fish_info$stressor))
                         ),
                         
                         mainPanel = ("OUTPUT!")
