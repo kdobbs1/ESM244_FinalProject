@@ -36,7 +36,8 @@ ui <- fluidPage(theme=shinytheme("slate"),
                                                         choices = unique(fish_info$stressor))
                         ),
                         
-                        mainPanel = ("OUTPUT!")
+                        mainPanel = ("OUTPUT!", 
+                                     plotOutput(fish_info_plot))
                         
                         
                       )
@@ -52,7 +53,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                                                     choices = unique(fish_info$stressor))
                         ),
                         
-                        mainPanel = ("OUTPUT!")
+                        mainPanel = ("OUTPUT", )
                         
                         
                       )
@@ -82,7 +83,7 @@ server <- function(input, output) {
       filter(stressor %in% input$input_stressor)
   })
   
-  output$fish_info_reactive <- renderPlot(
+  output$fish_info_plot <- renderPlot(
     ggplot(data = fish_info_reactive(), aes(x = stressor, y = vuln)) +
       geom_point(aes(color = species))
   )
