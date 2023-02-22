@@ -27,8 +27,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                     ),
              tabPanel("Plotting",
                       sidebarLayout(
-                        sidebarPanel(
-                                        radioButtons(inputId = "pick_species",
+                        sidebarPanel(radioButtons(inputId = "pick_species",
                                                            label = "Choose species:",
                                                            choices = unique(fish_info$species)),
                                      checkboxGroupInput(inputId = "pick_stressor",
@@ -83,7 +82,7 @@ server <- function(input, output) {
   })
   
   output$fish_info_plot <- renderPlot(
-    ggplot(data = fish_info, aes(x = stressor, y = vuln)) +
+    ggplot(data = fish_info_reactive(), aes(x = stressor, y = vuln)) +
       geom_point(aes(color = species)) + theme_minimal()
   )
   
