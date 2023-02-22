@@ -65,7 +65,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                                       )
                         ),
                         
-                        mainPanel ("OUTPUT!", plotOutput('table'))
+                        mainPanel ("OUTPUT!", tableOutput('table'))
                         
                         
                       )
