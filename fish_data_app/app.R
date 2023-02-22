@@ -83,8 +83,8 @@ server <- function(input, output) {
   })
   
   output$fish_info_plot <- renderPlot(
-    ggplot(data = fish_info_reactive(), aes(x = stressor, y = vuln)) +
-      geom_point(aes(color = species))
+    ggplot(data = fish_info, aes(x = stressor, y = vuln)) +
+      geom_point(aes(color = species)) + theme_minimal()
   )
 }
 
