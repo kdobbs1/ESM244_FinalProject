@@ -5,7 +5,7 @@ library(shinythemes)
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
 
 ui <- fluidPage(theme=shinytheme("slate"),
-  navbarPage("My app name",
+  navbarPage("Fun Fish Data World",
              tabPanel("Info", fluid=TRUE, icon=icon("globe-americas"),
                       sidebarLayout(
                         sidebarPanel(
@@ -27,7 +27,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                     ),
              tabPanel("Plotting",
                       sidebarLayout(
-                        sidebarPanel("WIDGETS",
+                        sidebarPanel(
                                         radioButtons(inputId = "pick_species",
                                                            label = "Choose species:",
                                                            choices = unique(fish_info$species)),
@@ -43,7 +43,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                       ),
              tabPanel("Mapping", fluid=TRUE, icon=icon("globe-americas"), 
                       sidebarLayout(
-                        sidebarPanel ("WIDGETS",
+                        sidebarPanel (
                                         selectInput(inputId = "pick_species",
                                                            label = "Choose species:",
                                                            choices = unique(fish_info$species)),
@@ -59,7 +59,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                       ),
              tabPanel("Summary Table", 
                       sidebarLayout(
-                        sidebarPanel ("WIDGETS",
+                        sidebarPanel (
                                       checkboxGroupInput(inputId = "pick_species",
                                                          label = "Choose species:",
                                                          choices = unique(fish_info$species)
