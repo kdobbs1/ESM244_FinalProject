@@ -28,7 +28,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
              tabPanel("Plotting",
                       sidebarLayout(
                         sidebarPanel("WIDGETS",
-                                        checkboxGroupInput(inputId = "pick_species",
+                                        radioButtons(inputId = "pick_species",
                                                            label = "Choose species:",
                                                            choices = unique(fish_info$species)),
                                      checkboxGroupInput(inputId = "pick_stressor",
