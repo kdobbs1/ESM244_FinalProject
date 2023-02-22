@@ -5,7 +5,12 @@ ui <- fluidPage(
   navbarPage("My app name",
              tabPanel("Tab 1",
                       sidebarLayout(
-                        sidebarPanel = ("WIDGETS"),
+                        sidebarPanel = ("WIDGETS",
+                                        checkboxGroupInput(inputId = "pick_species",
+                                                           label = "Choose species:",
+                                                           choices = unique(fish_info$species)
+                                                           )
+                                        ),
                         
                         mainPanel = ("OUTPUT!")
                         
