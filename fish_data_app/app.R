@@ -7,8 +7,7 @@ ui <- fluidPage(
   navbarPage("My app name",
              tabPanel("Tab 1",
                       sidebarLayout(
-                        sidebarPanel = ("WIDGETS",
-                                        checkboxGroupInput(inputId = "pick_species",
+                        sidebarPanel = (checkboxGroupInput(inputId = "pick_species",
                                                            label = "Choose species:",
                                                            choices = unique(fish_info$species)
                                                            )
@@ -19,8 +18,34 @@ ui <- fluidPage(
                         
                       )
                     ),
-             tabPanel("Tab 2"),
-             tabPanel("Tab 3")
+             tabPanel("Tab 2",
+                      sidebarLayout(
+                        sidebarPanel = ("WIDGETS",
+                                        checkboxGroupInput(inputId = "pick_species",
+                                                           label = "Choose species:",
+                                                           choices = unique(fish_info$species)
+                                        )
+                        ),
+                        
+                        mainPanel = ("OUTPUT!")
+                        
+                        
+                      )
+                      ),
+             tabPanel("Tab 3", 
+                      sidebarLayout(
+                        sidebarPanel = ("WIDGETS",
+                                        checkboxGroupInput(inputId = "pick_species",
+                                                           label = "Choose species:",
+                                                           choices = unique(fish_info$species)
+                                        )
+                        ),
+                        
+                        mainPanel = ("OUTPUT!")
+                        
+                        
+                      )
+                      )
   )
 )
 
