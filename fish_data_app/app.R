@@ -43,8 +43,10 @@ ui <- fluidPage(
                         sidebarPanel ("WIDGETS",
                                         selectInput(inputId = "pick_species",
                                                            label = "Choose species:",
-                                                           choices = unique(fish_info$species)
-                                        )
+                                                           choices = unique(fish_info$species)),
+                                        selectInput(inputId = "pick_stressor",
+                                                    label = "Choose stressor:",
+                                                    choices = unique(fish_info$stressor))
                         ),
                         
                         mainPanel = ("OUTPUT!")
