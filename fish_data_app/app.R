@@ -24,6 +24,17 @@ ui <- fluidPage(
   )
 )
 
-server <- function(input, output) {}
+server <- function(input, output) {
+  
+  fish_info_reactive <- reactive({
+    fish_info %>% 
+      filter(species %in% input$pick_species)
+  })
+  
+  output$fish_info_reactive <- renderPlot(
+    ggplot(data = fish_info_reactive(), aes(x = stressor, y = vuln)) +
+      geom_point(aes(color = species))
+  )
+}
 
 shinyApp(ui = ui, server = server)
