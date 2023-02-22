@@ -36,8 +36,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                                                         choices = unique(fish_info$stressor))
                         ),
                         
-                        mainPanel = ("OUTPUT!", 
-                                     plotOutput(fish_info_plot))
+                        mainPanel("OUTPUT!", plotOutput('fish_info_plot'))
                         
                         
                       )
