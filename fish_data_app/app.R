@@ -1,11 +1,12 @@
 library(shiny)
 library(tidyverse)
 library(here)
+library(shinythemes)
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
 
-ui <- fluidPage(
+ui <- fluidPage(theme=shinytheme("slate"),
   navbarPage("My app name",
-             tabPanel("Info",
+             tabPanel("Info", fluid=TRUE, icon=icon("globe-americas"),
                       sidebarLayout(
                         sidebarPanel(
                           titlePanel("Title Here"),
@@ -40,7 +41,7 @@ ui <- fluidPage(
                         
                       )
                       ),
-             tabPanel("Mapping", 
+             tabPanel("Mapping", fluid=TRUE, icon=icon("globe-americas"), 
                       sidebarLayout(
                         sidebarPanel ("WIDGETS",
                                         selectInput(inputId = "pick_species",
