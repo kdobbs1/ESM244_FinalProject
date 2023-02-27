@@ -82,9 +82,13 @@ server <- function(input, output) {
       filter(species %in% input$pick_species3) %>% 
       filter(stressor %in% input$pick_stressor3) 
   })
+  # output$fish_info_plot <- renderPlot(
+  #   ggplot(data = fish_info_reactive(), aes(x = stressor, y = vuln)) +
+  #     geom_point(aes(color = species)) + theme_minimal()
+  # )
   output$fish_info_plot <- renderPlot(
-    ggplot(data = fish_info_reactive(), aes(x = stressor, y = vuln)) +
-      geom_point(aes(color = species)) + theme_minimal()
+    ggplot(data = fish_info_reactive(), aes(x = stressor, y=vuln)) +
+      geom_col(aes(color = vuln, fill=vuln)) + theme_minimal()
   )
   
   table_reactive <-reactive({
