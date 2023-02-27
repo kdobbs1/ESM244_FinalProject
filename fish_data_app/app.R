@@ -27,9 +27,10 @@ ui <- fluidPage(theme=shinytheme("slate"),
                     ),
              tabPanel("Plotting",
                       sidebarLayout(
-                        sidebarPanel(radioButtons(inputId = "pick_species",
-                                                           label = "Choose species:",
-                                                           choices = unique(fish_info$species)),
+                        sidebarPanel(selectInput(inputId = "pick_species",
+                                                  label = "Choose species:",
+                                                  choices = unique(fish_info$species), 
+                                                  selected = fish_info$species[1]),
                                      checkboxGroupInput(inputId = "pick_stressor",
                                                         label = "Choose stressor:",
                                                         choices = unique(fish_info$stressor))
@@ -43,7 +44,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
              tabPanel("Mapping", fluid=TRUE, icon=icon("globe-americas"), 
                       sidebarLayout(
                         sidebarPanel (
-                                        selectInput(inputId = "pick_species",
+                                        selectInput(inputId = "pick_species",       #need unique inputIds per widget
                                                            label = "Choose species:",
                                                            choices = unique(fish_info$species)),
                                         selectInput(inputId = "pick_stressor",
