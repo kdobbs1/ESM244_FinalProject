@@ -37,11 +37,11 @@ ui <- fluidPage(theme=shinytheme("slate"),
                           #select stressor
                           checkboxGroupInput(inputId = "pick_stressor2",
                                              label = "Choose stressor",
-                                             choices = unique(fish_info$stressor)),
+                                             choices = unique(fish_info$stressor))#,
                           #select region
-                          checkboxGroupInput(inputId = "pick_region",
-                                             label = "Choose region:",
-                                             choices = unique(region_info$realm))
+                          #checkboxGroupInput(inputId = "pick_region",
+                                            # label = "Choose region:",
+                                            # choices = unique(region_info$realm))
                          
                            ),
                          mainPanel ("OUTPUT!", tableOutput('table'))
@@ -101,7 +101,8 @@ server <- function(input, output) {
   
   table_reactive <-reactive({
     fish_info %>% 
-      filter(stressor %in% input$input_stressor) %>% 
+      filter(species %in% input$pick_species2) %>% 
+      filter(stressor %in% input$pick_stressor2) %>% 
       filter(vuln > 0.5) %>% 
       select(species, vuln)
   })
