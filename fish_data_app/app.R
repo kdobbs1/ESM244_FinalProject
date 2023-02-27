@@ -47,10 +47,11 @@ ui <- fluidPage(theme=shinytheme("slate"),
                         sidebarPanel(selectInput(inputId = "pick_species3",
                                                   label = "Choose species:",
                                                   choices = unique(fish_info$species), 
-                                                  selected = fish_info$species[1]),
+                                                  selected = fish_info$species[2]),
                                      checkboxGroupInput(inputId = "pick_stressor3",
                                                         label = "Choose stressor:",
-                                                        choices = unique(fish_info$stressor))
+                                                        choices = unique(fish_info$stressor), 
+                                                        selected = c(fish_info$stressor[1], fish_info$stressor[5], fish_info$stressor[8]))
                         ),
                         
                         mainPanel("Impact of Stressors on" , plotOutput('fish_info_plot'))
@@ -90,7 +91,7 @@ server <- function(input, output) {
   output$fish_info_plot <- renderPlot(
     ggplot(data = fish_info_reactive(), aes(x = stressor, y=vuln)) +
       geom_col(aes(color = vuln, fill=vuln)) + theme_minimal()+
-      theme(axis.text.x = element_text(angle = 45))
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
   )
   
   table_reactive <-reactive({
