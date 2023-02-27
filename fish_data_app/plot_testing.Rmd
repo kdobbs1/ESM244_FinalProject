@@ -13,6 +13,7 @@ library(tidyverse)
 library(terra)
 library(sf)
 library(tmap)
+library(Dict)
 library(here)
 ```
 
@@ -79,17 +80,69 @@ Inputs:
 Outputs:
   
 
+### make species lists for conditionals
+
+```{r}
+am_species <- c('chanos chanos', 
+                'gadus morhua', 
+                'mallotus villosus',
+                'oncorhynchus mykiss',
+                'salmo salar',
+                'trichiurus lepturus')
+
+iucn_species <- c('brevoortia patronus',
+                  'clupea harengus',
+                  'engraulis japonicus',
+                  'engraulis ringens',
+                  'katsuwonus pelamis',
+                  'sardina pilchardus',
+                  'sardinella longiceps',
+                  'scomber japonicus',
+                  'scomber scombrus',
+                  'thunnus albacares')
+
+stressor_maps_pollutants <- c('')
+```
+
+
 ### subset data
+
+Where I left off: need to keep making file path and name variables. I dont think I need to do the different folders variation, since the stressor maps actually seems to include sea surface temperature extremes.
 
 ```{r}
 region_choice <- 1
 stressor_choice <- 'air_temp'
-species_choice <- c('Chanos Chanos')
+species_choice <- c('chanos chanos')
 
 # format inputs for feeding to file chains
 species_choice_formatted <- sub(' ', '_', tolower(species_choice))
 
 
+# format file names for calls according to choice
+stressor_file_dict <- {}                # make dictionary with all stressor and file names
+
+src <- ''
+stressor_path_addition <- ''
+
+# if (stressor_choice %in% c('air_temp')) {
+  if (species_choice %in% am_species) {
+    src <- 'am'
+  }
+  if (species_choice %in% iucn_species) {
+    src <- 'iucn'
+  }
+  
+  # species_file_prefix <- '_spp_max_temp_'
+  
+#  stressor_path_addition <- 'sst_rise_maps'
+#} else {
+  stressor_path_addition <- 'stressor_maps'
+#}
+
+stressor_folder_path <- paste(data_path, stressor_path_addition, )
+stressor_file_name <- paste(src, species_file_prefix, species_choice_formatted, 'tif)
+
+stress_rast <- raster(here(stressor_folder_path, 'ocean_area_mol.tif'))
 
 
 ```
