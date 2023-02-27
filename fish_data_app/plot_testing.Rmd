@@ -8,18 +8,47 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+library(raster)
 library(tidyverse)
+library(terra)
 library(sf)
 library(tmap)
 library(here)
 ```
 
 
-### fish info
+### define global variables and functions
 
 ```{r}
-fish_info <- read_csv(here('fish_data_app/data', 'fish_info.csv'))
+data_path <- 'fish_data_app/data'
+
+source(here(data_path, 'helper_fxns.R'))
 ```
+
+
+### read in macro datasets
+
+```{r}
+fish_info <- read_csv(here(data_path, 'fish_info.csv'))
+
+rgns_geog <- read_csv(here(data_path, 'spatial', 'meow_rgns.csv'))
+rgn_names_ohi <- read_csv(here(data_path, 'spatial', 'rgn_names_ohi.csv'))
+rgns_geog_raster <- raster(here(data_path, 'spatial', 'meow_rgns_mol.tif'))
+rgns_geog_raster
+plot(rgns_geog_raster)
+```
+
+```{r}
+eez_raster <- raster(here(data_path, 'spatial', 'eez_mol.tif'))
+eez_raster
+plot(eez_raster)
+
+ocean_area_raster <- raster(here(data_path, 'spatial', 'ocean_area_mol.tif'))
+ocean_area_raster
+plot(ocean_area_raster)
+```
+
+
 
 
 
@@ -53,12 +82,14 @@ Outputs:
 ### subset data
 
 ```{r}
-region_choice <- '01'
+region_choice <- 1
 stressor_choice <- 'air_temp'
 species_choice <- c('Chanos Chanos')
 
 # format inputs for feeding to file chains
 species_choice_formatted <- sub(' ', '_', tolower(species_choice))
+
+
 
 
 ```

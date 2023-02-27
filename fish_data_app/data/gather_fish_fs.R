@@ -68,7 +68,7 @@ fish_df_new <- fish_df %>%
   ungroup() %>%
   select(-id)
 
-write_csv(fish_df_new, here('fish_for_esm244/fish_info.csv'))
+# write_csv(fish_df_new, here('fish_for_esm244/fish_info.csv'))
 
 ### gather spatial info
 spat_info <- c('ocean_area_mol.tif', 'eez_mol.tif', 
@@ -81,4 +81,4 @@ file.copy(spatial_fs, here('fish_for_esm244/spatial', basename(spatial_fs)))
 meow_info <- foreign::read.dbf(here('_spatial/meow_rgns/meow_rgns.dbf')) %>%
   janitor::clean_names()
 
-write_csv(meow_info, here('fish_for_esm244/spatial/meow_rgns.csv'))
+# write_csv(meow_info, here('fish_for_esm244/spatial/meow_rgns.csv'))
