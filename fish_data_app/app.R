@@ -17,7 +17,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                           #Select stressor
                           radioButtons(inputId = "pick_stressor1",
                                                 label = "Choose stressor:",
-                                    f            choices = unique(fish_info$stressor))
+                                                choices = unique(fish_info$stressor))
                                         ),
                         
                         mainPanel ("OUTPUT!")
