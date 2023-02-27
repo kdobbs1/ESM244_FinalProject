@@ -41,7 +41,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                           #select region
                           checkboxGroupInput(inputId = "pick_region",
                                              label = "Choose region:",
-                                             choices = unique(meow_rgns$realms))
+                                             choices = unique(region_info$realm))
                          
                            ),
                          mainPanel ("OUTPUT!", tableOutput('table'))
