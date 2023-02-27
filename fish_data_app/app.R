@@ -3,6 +3,7 @@ library(tidyverse)
 library(here)
 library(shinythemes)
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
+region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
 
 ui <- fluidPage(theme=shinytheme("slate"),
   navbarPage("Fun Fish Data World",
@@ -36,7 +37,11 @@ ui <- fluidPage(theme=shinytheme("slate"),
                           #select stressor
                           checkboxGroupInput(inputId = "pick_stressor2",
                                              label = "Choose stressor",
-                                             choices = unique(fish_info$stressor))
+                                             choices = unique(fish_info$stressor)),
+                          #select region
+                          checkboxGroupInput(inputId = "pick_region",
+                                             label = "Choose region:",
+                                             choices = unique(meow_rgns$realms))
                          
                            ),
                          mainPanel ("OUTPUT!", tableOutput('table'))
