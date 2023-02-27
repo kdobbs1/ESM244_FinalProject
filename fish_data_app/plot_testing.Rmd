@@ -8,17 +8,21 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+library(raster)
 library(tidyverse)
+library(terra)
 library(sf)
 library(tmap)
 library(here)
 ```
 
 
-### global variables
+### define global variables and functions
 
 ```{r}
 data_path <- 'fish_data_app/data'
+
+source(here(data_path, 'helper_fxns.R'))
 ```
 
 
@@ -28,8 +32,23 @@ data_path <- 'fish_data_app/data'
 fish_info <- read_csv(here(data_path, 'fish_info.csv'))
 
 rgns_geog <- read_csv(here(data_path, 'spatial', 'meow_rgns.csv'))
-rgns_geog_raster <- 
+rgn_names_ohi <- read_csv(here(data_path, 'spatial', 'rgn_names_ohi.csv'))
+rgns_geog_raster <- raster(here(data_path, 'spatial', 'meow_rgns_mol.tif'))
+rgns_geog_raster
+plot(rgns_geog_raster)
 ```
+
+```{r}
+eez_raster <- raster(here(data_path, 'spatial', 'eez_mol.tif'))
+eez_raster
+plot(eez_raster)
+
+ocean_area_raster <- raster(here(data_path, 'spatial', 'ocean_area_mol.tif'))
+ocean_area_raster
+plot(ocean_area_raster)
+```
+
+
 
 
 
