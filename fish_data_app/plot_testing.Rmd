@@ -15,10 +15,20 @@ library(here)
 ```
 
 
-### fish info
+### global variables
 
 ```{r}
-fish_info <- read_csv(here('fish_data_app/data', 'fish_info.csv'))
+data_path <- 'fish_data_app/data'
+```
+
+
+### read in macro datasets
+
+```{r}
+fish_info <- read_csv(here(data_path, 'fish_info.csv'))
+
+rgns_geog <- read_csv(here(data_path, 'spatial', 'meow_rgns.csv'))
+rgns_geog_raster <- 
 ```
 
 
@@ -53,12 +63,14 @@ Outputs:
 ### subset data
 
 ```{r}
-region_choice <- '01'
+region_choice <- 1
 stressor_choice <- 'air_temp'
 species_choice <- c('Chanos Chanos')
 
 # format inputs for feeding to file chains
 species_choice_formatted <- sub(' ', '_', tolower(species_choice))
+
+
 
 
 ```
