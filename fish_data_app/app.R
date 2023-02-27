@@ -25,6 +25,20 @@ ui <- fluidPage(theme=shinytheme("slate"),
                         
                       )
                     ),
+             tabPanel("Summary Table", 
+                      sidebarLayout(
+                        sidebarPanel (
+                          checkboxGroupInput(inputId = "pick_species",
+                                             label = "Choose species:",
+                                             choices = unique(fish_info$species)
+                          )
+                        ),
+                        
+                        mainPanel ("OUTPUT!", tableOutput('table'))
+                        
+                        
+                      )
+             ),
              tabPanel("Plotting",
                       sidebarLayout(
                         sidebarPanel(selectInput(inputId = "pick_species",
@@ -56,21 +70,8 @@ ui <- fluidPage(theme=shinytheme("slate"),
                         
                         
                       )
-                      ),
-             tabPanel("Summary Table", 
-                      sidebarLayout(
-                        sidebarPanel (
-                                      checkboxGroupInput(inputId = "pick_species",
-                                                         label = "Choose species:",
-                                                         choices = unique(fish_info$species)
-                                      )
-                        ),
-                        
-                        mainPanel ("OUTPUT!", tableOutput('table'))
-                        
-                        
                       )
-             )
+             
   )
 )
 
