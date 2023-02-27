@@ -32,7 +32,11 @@ ui <- fluidPage(theme=shinytheme("slate"),
                           #select species
                           checkboxGroupInput(inputId = "pick_species2",
                                              label = "Choose species:",
-                                             choices = unique(fish_info$species)
+                                             choices = unique(fish_info$species)),
+                          #select stressor
+                          checkboxGroupInput(inputId = "pick_stressor2",
+                                             label = "Choose stressor",
+                                             choices = unique(fish_info$stressor))
                           )
                         ),
                         
@@ -40,7 +44,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                         
                         
                       )
-             ),
+             ,
              tabPanel("Plotting",
                       sidebarLayout(
                         sidebarPanel(selectInput(inputId = "pick_species3",
