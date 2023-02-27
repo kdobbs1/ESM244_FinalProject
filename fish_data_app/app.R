@@ -17,7 +17,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                           #Select stressor
                           radioButtons(inputId = "pick_stressor1",
                                                 label = "Choose stressor:",
-                                                choices = unique(fish_info$stressor))
+                                    f            choices = unique(fish_info$stressor))
                                         ),
                         
                         mainPanel ("OUTPUT!")
@@ -60,12 +60,13 @@ ui <- fluidPage(theme=shinytheme("slate"),
              tabPanel("Mapping", fluid=TRUE, icon=icon("globe-americas"), 
                       sidebarLayout(
                         sidebarPanel (
-                                        selectInput(inputId = "pick_species4",       #need unique inputIds per widget
-                                                           label = "Choose species:",
-                                                           choices = unique(fish_info$species)),
                                         selectInput(inputId = "pick_stressor4",
                                                     label = "Choose stressor:",
                                                     choices = unique(fish_info$stressor))
+                                        checkboxGroupInput(inputId = "pick_species4",       #need unique inputIds per widget
+                                                           label = "Choose Specieseses:",
+                                                           choices = unique(fish_info$species)),
+                                        
                         ),
                         
                         mainPanel ("OUTPUT" )
