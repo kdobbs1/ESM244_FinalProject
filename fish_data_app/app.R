@@ -2,8 +2,13 @@ library(shiny)
 library(tidyverse)
 library(here)
 library(shinythemes)
+library(fontawesome)
+library(dplyr)
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
 region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
+fish_name_info<-read_csv(here("fish_data_app/data", "ESM244FishSpecies.csv")) %>% 
+  mutate_all(funs=tolower)
+
 
 ui <- fluidPage(theme=shinytheme("slate"),
   navbarPage("Fun Fish Data World",
@@ -26,7 +31,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                         
                       )
                     ),
-             tabPanel("Summary Table", 
+             tabPanel("Summary Table", fluid=TRUE, icon=icon("", lib = "font-awesome"),
                       sidebarLayout(
                         sidebarPanel (
                           titlePanel("Title Here"),
@@ -47,11 +52,28 @@ ui <- fluidPage(theme=shinytheme("slate"),
                          mainPanel ("OUTPUT!", tableOutput('table'))
                          )
                       ),
-             tabPanel("Plotting",
+             tabPanel("Plotting", fluid=TRUE, icon=icon("fa-solid fa-chart-column", lib = "font-awesome"), # From glyphicon library,
                       sidebarLayout(
                         sidebarPanel(selectInput(inputId = "pick_species3",
                                                   label = "Choose species:",
-                                                  choices = unique(fish_info$species), 
+                                                  #choices = unique(fish_info$species), 
+                                                  choices = c("Brevoortia patronus"="brevoortia patronus",
+                                                              "*Chanos chanos*"="chanos chanos",
+                                                              "*Clupea harengus*"="clupea harengus",
+                                                              "*Engrulis japonicus*"="engrulis japonicus",
+                                                              "*Engraulis ringens*"="engraulis ringens",
+                                                              "*Gadus morhua*"="gadus morhua",
+                                                              "*Katsuwonus pelamis*"="katsuwonus pelamis",
+                                                              "*Mallotus villosus*"="mallotus villosus",
+                                                              "*Oncorhynchus mykiss*"="oncorhynchus mykiss",
+                                                              "*Salmo salar*"="salmo salar",
+                                                              "*Sardina pilchardus*"="sardina pilchardus",
+                                                              "*Sardinella longiceps*"="sardinella longiceps",
+                                                              "*Scomber japonicus*"="scomber japonicus",
+                                                              "*Scomber scombrus*"="scomber scombrus",
+                                                              "*Thunnus albacares*"="thunnus albacares",
+                                                              "*Trichiurus lepturus*"="trichiurus lepturus"
+                                                              ),
                                                   selected = fish_info$species[2]),
                                      checkboxGroupInput(inputId = "pick_stressor3",
                                                         label = "Choose stressor:",
