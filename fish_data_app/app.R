@@ -28,6 +28,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
              tabPanel("Summary Table", 
                       sidebarLayout(
                         sidebarPanel (
+                          titlePanel("Title Here")
                           checkboxGroupInput(inputId = "pick_species2",
                                              label = "Choose species:",
                                              choices = unique(fish_info$species)
