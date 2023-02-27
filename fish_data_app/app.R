@@ -11,11 +11,11 @@ ui <- fluidPage(theme=shinytheme("slate"),
                         sidebarPanel(
                           titlePanel("Title Here"),
                           #Select species
-                          radioButtons(inputId = "pick_species",
+                          radioButtons(inputId = "pick_species1",
                                                 label = "Choose species:",
                                                 choices = unique(fish_info$species)),
                           #Select stressor
-                          radioButtons(inputId = "pick_stressor",
+                          radioButtons(inputId = "pick_stressor1",
                                                 label = "Choose stressor:",
                                                 choices = unique(fish_info$stressor))
                                         ),
@@ -28,7 +28,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
              tabPanel("Summary Table", 
                       sidebarLayout(
                         sidebarPanel (
-                          checkboxGroupInput(inputId = "pick_species",
+                          checkboxGroupInput(inputId = "pick_species2",
                                              label = "Choose species:",
                                              choices = unique(fish_info$species)
                           )
@@ -41,11 +41,11 @@ ui <- fluidPage(theme=shinytheme("slate"),
              ),
              tabPanel("Plotting",
                       sidebarLayout(
-                        sidebarPanel(selectInput(inputId = "pick_species",
+                        sidebarPanel(selectInput(inputId = "pick_species3",
                                                   label = "Choose species:",
                                                   choices = unique(fish_info$species), 
                                                   selected = fish_info$species[1]),
-                                     checkboxGroupInput(inputId = "pick_stressor",
+                                     checkboxGroupInput(inputId = "pick_stressor3",
                                                         label = "Choose stressor:",
                                                         choices = unique(fish_info$stressor))
                         ),
@@ -58,10 +58,10 @@ ui <- fluidPage(theme=shinytheme("slate"),
              tabPanel("Mapping", fluid=TRUE, icon=icon("globe-americas"), 
                       sidebarLayout(
                         sidebarPanel (
-                                        selectInput(inputId = "pick_species",       #need unique inputIds per widget
+                                        selectInput(inputId = "pick_species4",       #need unique inputIds per widget
                                                            label = "Choose species:",
                                                            choices = unique(fish_info$species)),
-                                        selectInput(inputId = "pick_stressor",
+                                        selectInput(inputId = "pick_stressor4",
                                                     label = "Choose stressor:",
                                                     choices = unique(fish_info$stressor))
                         ),
@@ -79,8 +79,8 @@ server <- function(input, output) {
   
   fish_info_reactive <- reactive({
     fish_info %>% 
-      filter(species %in% input$pick_species) %>% 
-      filter(stressor %in% input$pick_stressor) 
+      filter(species %in% input$pick_species3) %>% 
+      filter(stressor %in% input$pick_stressor3) 
   })
   output$fish_info_plot <- renderPlot(
     ggplot(data = fish_info_reactive(), aes(x = stressor, y = vuln)) +
