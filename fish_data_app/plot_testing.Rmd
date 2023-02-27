@@ -1,0 +1,29 @@
+---
+title: "plot_testing"
+author: "Seth (The True) Villanueva"
+date: "2023-02-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(sf)
+library(tmap)
+library(here)
+```
+
+
+
+
+# Make map of environmental stressors and species range
+
+### subset data
+
+### make plot
+
+
+
+
+
