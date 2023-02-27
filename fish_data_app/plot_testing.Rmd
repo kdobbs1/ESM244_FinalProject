@@ -15,13 +15,67 @@ library(here)
 ```
 
 
+### fish info
+
+```{r}
+fish_info <- read_csv(here('fish_data_app/data', 'fish_info.csv'))
+```
+
 
 
 # Make map of environmental stressors and species range
 
+Where are I/Os located?
+
+Inputs:
+
+  Region
+    realm - data/spatial/
+                  meow_rgns.csv
+                      $realm_code
+                      $realm
+                  meow_rgns_mol.tif             # maps of the realms?
+  Stressor
+    name - data/fish_info
+                  $species
+    area - data/stressor_maps
+  Species
+    name - data/fish_info
+                  $stressor
+    range - data/species_ranges
+                  `data_source'_spp_mol_`species_name_or_number'.csv
+    vulnerability - data/fish_info
+                            $vuln
+
+Outputs:
+  
+
 ### subset data
 
+```{r}
+region_choice <- '01'
+stressor_choice <- 'air_temp'
+species_choice <- c('Chanos Chanos')
+
+# format inputs for feeding to file chains
+species_choice_formatted <- sub(' ', '_', tolower(species_choice))
+
+
+```
+
+
 ### make plot
+
+```{r}
+
+```
+
+
+
+
+
+
+
 
 
 
