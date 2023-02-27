@@ -66,7 +66,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                         sidebarPanel (
                                         selectInput(inputId = "pick_stressor4",
                                                     label = "Choose stressor:",
-                                                    choices = unique(fish_info$stressor))
+                                                    choices = unique(fish_info$stressor)),
                                         checkboxGroupInput(inputId = "pick_species4",       #need unique inputIds per widget
                                                            label = "Choose Specieseses:",
                                                            choices = unique(fish_info$species)),
@@ -92,7 +92,8 @@ server <- function(input, output) {
 
   output$fish_info_plot <- renderPlot(
     ggplot(data = fish_info_reactive(), aes(x = stressor, y=vuln)) +
-      geom_col(aes(color = vuln, fill=vuln)) + theme_minimal()
+      geom_col(aes(color = vuln, fill=vuln)) + theme_minimal()+
+      theme(axis.text.x = element_text(angle = 45))
   )
   
   table_reactive <-reactive({
