@@ -17,7 +17,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                           #Select stressor
                           radioButtons(inputId = "pick_stressor1",
                                                 label = "Choose stressor:",
-                                                choices = unique(fish_info$stressor))
+                                    f            choices = unique(fish_info$stressor))
                                         ),
                         
                         mainPanel ("OUTPUT!")
@@ -56,7 +56,7 @@ ui <- fluidPage(theme=shinytheme("slate"),
                                                         choices = unique(fish_info$stressor))
                         ),
                         
-                        mainPanel("OUTPUT!", plotOutput('fish_info_plot'))
+                        mainPanel("Impact of Stressors on" , plotOutput('fish_info_plot'))
                         
                         
                       )
@@ -64,12 +64,13 @@ ui <- fluidPage(theme=shinytheme("slate"),
              tabPanel("Mapping", fluid=TRUE, icon=icon("globe-americas"), 
                       sidebarLayout(
                         sidebarPanel (
-                                        selectInput(inputId = "pick_species4",       #need unique inputIds per widget
-                                                           label = "Choose species:",
-                                                           choices = unique(fish_info$species)),
                                         selectInput(inputId = "pick_stressor4",
                                                     label = "Choose stressor:",
                                                     choices = unique(fish_info$stressor))
+                                        checkboxGroupInput(inputId = "pick_species4",       #need unique inputIds per widget
+                                                           label = "Choose Specieseses:",
+                                                           choices = unique(fish_info$species)),
+                                        
                         ),
                         
                         mainPanel ("OUTPUT" )
@@ -88,10 +89,7 @@ server <- function(input, output) {
       filter(species %in% input$pick_species3) %>% 
       filter(stressor %in% input$pick_stressor3) 
   })
-  # output$fish_info_plot <- renderPlot(
-  #   ggplot(data = fish_info_reactive(), aes(x = stressor, y = vuln)) +
-  #     geom_point(aes(color = species)) + theme_minimal()
-  # )
+
   output$fish_info_plot <- renderPlot(
     ggplot(data = fish_info_reactive(), aes(x = stressor, y=vuln)) +
       geom_col(aes(color = vuln, fill=vuln)) + theme_minimal()
