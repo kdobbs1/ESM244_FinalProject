@@ -132,7 +132,7 @@ stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_e
                         "sedimentation" = "",
                         "sst_rise" = "spp_max_temp",     # this is located in a different location than the others, and is only part of the file name
                         "storm_disturbance" = "",
-                        "uv_radiation" = "",
+                        "uv_radiation" = "uv_radiation_2020",
                         "wildlife_strike" = ""
 )
 # usused maps: benth, bycatch_pelagic, direct_human, sea_level_rise, shipping
@@ -145,7 +145,7 @@ stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_e
 ```{r, message = FALSE}
 
 region_choice <- 1
-stressor_choice <- 'ocean_acidification'
+stressor_choice <- 'uv_radiation'
 species_choice <- c('oncorhynchus mykiss')
 
 # format inputs for feeding to file chains
@@ -210,7 +210,7 @@ if (src == 'iucn') {
 
 
 
-##### Capture species vulernability to the stressor
+##### Capture species vulernability to the chosen stressor
 
 species_vuln <- fish_info %>% 
   filter(species == species_choice, stressor == stressor_choice) %>% 
@@ -229,7 +229,7 @@ stressor_rast <- raster(here(stressor_tif_path))
 #                            ocean_mask = TRUE)
 
 
-plot(stress_rast)
+plot(stressor_rast)
 
 ```
 
@@ -255,7 +255,10 @@ Things to ask casey:
 1. is the method I'm using to subset the data the best way of doing it for spatial data?
 2. Am I missing something, since there are more stressors than maps?
 3. How to treat similar maps like shipping large and small; combine somehow?
-4. how to use number codes for iucn sst maps?
+4. Where do realm bounds come from?
+
+5. best way of operating on a list of fish species
+      And best way of adding map raster areas depending on a variable number of species
 
 
 
