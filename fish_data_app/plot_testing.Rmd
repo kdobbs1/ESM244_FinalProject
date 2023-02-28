@@ -140,7 +140,7 @@ stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_e
 ```
 
 
-### subset data
+### Extract stressor and species specific rasters
 
 ```{r, message = FALSE}
 
