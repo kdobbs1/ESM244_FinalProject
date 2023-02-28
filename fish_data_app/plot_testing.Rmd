@@ -112,34 +112,6 @@ iucn_species_dict <- c('brevoortia patronus' = '191208',
                   'scomber scombrus' = '170354',
                   'thunnus albacares' = '21857')
 
-stressor_maps_pollutants <- c('')
-```
-
-
-### subset data
-
-```{r, message = FALSE}
-region_choice <- 1
-stressor_choice <- 'ocean_acidification'
-species_choice <- c('oncorhynchus mykiss')
-
-# format inputs for feeding to file chains
-species_choice_formatted <- sub(' ', '_', tolower(species_choice))
-species_name_file <- species_choice_formatted
-
-# set source depending on species
-src <- ''
-if (species_choice %in% am_species) {
-  src <- 'am'
-}
-if (species_choice %in% iucn_species) {
-  src <- 'iucn'
-  species_name_file <- iucn_species_dict[species_choice]
-}
-
-
-##### format STRESSOR file names for calls according to choice
-
 # make dictionary with all stressor and file names
 stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_extreme should go?
                         "biomass_removal" = "",
@@ -164,6 +136,35 @@ stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_e
                         "wildlife_strike" = ""
 )
 # usused maps: benth, bycatch_pelagic, direct_human, sea_level_rise, shipping
+
+```
+
+
+### subset data
+
+```{r, message = FALSE}
+
+region_choice <- 1
+stressor_choice <- 'ocean_acidification'
+species_choice <- c('oncorhynchus mykiss')
+
+# format inputs for feeding to file chains
+species_choice_formatted <- sub(' ', '_', tolower(species_choice))
+species_name_file <- species_choice_formatted
+
+# set source depending on species
+src <- ''
+if (species_choice %in% am_species) {
+  src <- 'am'
+}
+if (species_choice %in% iucn_species) {
+  src <- 'iucn'
+  species_name_file <- iucn_species_dict[species_choice]
+}
+
+
+
+##### format STRESSOR file names for calls according to choice
 
 # initialize path and name variables
 stressor_tif_name <- ''
@@ -190,7 +191,9 @@ stressor_tif_folder <- paste(data_path, '/', stressor_tif_path_addition, sep = '
 stressor_tif_path <- paste(stressor_tif_folder, '/', stressor_tif_name, '.tif', sep = '')
 
 
+
 ##### Format SPECIES range file name for calls
+
 species_range_file <- paste(src, '_spp_mol_', species_name_file, sep = '')
 species_range_csv_path <- paste(data_path, '/species_ranges/', species_range_file, '.csv', sep = '')
 
@@ -206,13 +209,17 @@ if (src == 'iucn') {
 }
 
 
+
 ##### Capture species vulernability to the stressor
+
 species_vuln <- fish_info %>% 
   filter(species == species_choice, stressor == stressor_choice) %>% 
   pull(vuln)
 
 
+
 ##### Generate rasters for stressor and species range
+
 stressor_rast <- raster(here(stressor_tif_path))
 # call helper function to make raster from csv
 # species_rast <- map_to_mol(species_range_df,
@@ -228,6 +235,10 @@ plot(stress_rast)
 
 
 ### make plot
+
+We want to have a base color opacity for the species range equal to the vulnerability, then when it overlaps with stressor the color should scale according to the product of vulernability and stressor amount
+
+It might be best to make a series of raster files to reflect the color options we want. For example, for 1 species, we would need 2 rasters: 1 for stressor area EXCLUDING stressor overlap with species range, then 1 for species range INCLUDING overlap with stressor area. The species range should then be able to range in color from a minimum that reflects the base vulernability and the scaling with stressor exposure.
 
 ```{r}
 
