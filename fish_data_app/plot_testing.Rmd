@@ -23,7 +23,7 @@ library(here)
 ```{r}
 data_path <- 'fish_data_app/data'
 
-source(here(data_path, 'helper_fxns.R'))
+# source(here(data_path, 'helper_fxns.R'))
 ```
 
 
@@ -101,49 +101,128 @@ iucn_species <- c('brevoortia patronus',
                   'scomber scombrus',
                   'thunnus albacares')
 
+iucn_species_dict <- c('brevoortia patronus' = '191208',
+                  'clupea harengus' = '155123',
+                  'engraulis japonicus' = '170306',
+                  'engraulis ringens' = '183775',
+                  'katsuwonus pelamis' = '170310',
+                  'sardina pilchardus' = '198580',
+                  'sardinella longiceps' = '154989',
+                  'scomber japonicus' = '98969433',
+                  'scomber scombrus' = '170354',
+                  'thunnus albacares' = '21857')
+
 stressor_maps_pollutants <- c('')
 ```
 
 
 ### subset data
 
-Where I left off: need to keep making file path and name variables. I dont think I need to do the different folders variation, since the stressor maps actually seems to include sea surface temperature extremes.
-
-```{r}
+```{r, message = FALSE}
 region_choice <- 1
-stressor_choice <- 'air_temp'
-species_choice <- c('chanos chanos')
+stressor_choice <- 'ocean_acidification'
+species_choice <- c('oncorhynchus mykiss')
 
 # format inputs for feeding to file chains
 species_choice_formatted <- sub(' ', '_', tolower(species_choice))
+species_name_file <- species_choice_formatted
 
-
-# format file names for calls according to choice
-stressor_file_dict <- {}                # make dictionary with all stressor and file names
-
+# set source depending on species
 src <- ''
-stressor_path_addition <- ''
+if (species_choice %in% am_species) {
+  src <- 'am'
+}
+if (species_choice %in% iucn_species) {
+  src <- 'iucn'
+  species_name_file <- iucn_species_dict[species_choice]
+}
 
-# if (stressor_choice %in% c('air_temp')) {
-  if (species_choice %in% am_species) {
-    src <- 'am'
-  }
-  if (species_choice %in% iucn_species) {
-    src <- 'iucn'
-  }
+
+##### format STRESSOR file names for calls according to choice
+
+# make dictionary with all stressor and file names
+stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_extreme should go?
+                        "biomass_removal" = "",
+                        "bycatch" = "bycatch_benthic_2017",  # there are two bycatch files with different suffixes?
+                        "entanglement_macroplastic" = "",
+                        "eutrophication_nutrient_pollution" = "nutrient_2020",
+                        "habitat_loss_degradation" = "",
+                        "inorganic_pollution" = "",
+                        "light_pollution" = "light_2018",
+                        "marine_heat_waves" = "",
+                        "noise_pollution" = "",
+                        "ocean_acidification" = "ocean_acidification_2020",
+                        "oceanographic" = "",
+                        "organic_pollution" = "",
+                        "plastic_pollution_microplastic" = "microplastics_2015",
+                        "poisons_toxins" = "",
+                        "salinity" = "",
+                        "sedimentation" = "",
+                        "sst_rise" = "spp_max_temp",     # this is located in a different location than the others, and is only part of the file name
+                        "storm_disturbance" = "",
+                        "uv_radiation" = "",
+                        "wildlife_strike" = ""
+)
+# usused maps: benth, bycatch_pelagic, direct_human, sea_level_rise, shipping
+
+# initialize path and name variables
+stressor_tif_name <- ''
+stressor_tif_path_addition <- ''
+stressor_tif_path <- ''
+
+# add to path and name for sea surface temperature maps
+if (stressor_choice == "sst_rise") {
   
-  # species_file_prefix <- '_spp_max_temp_'
+  sst_tif_prefix <- '_spp_max_temp_'
+  stressor_tif_path_addition <- 'sst_rise_maps'
   
-#  stressor_path_addition <- 'sst_rise_maps'
-#} else {
-  stressor_path_addition <- 'stressor_maps'
-#}
+  stressor_tif_name <- paste(src, sst_tif_prefix, species_name_file, sep = '')
+  stressor_tif_path_addition <- 'sst_rise_maps'
+  
+} else {                                    # for all other files, refer to the dictionary
+  
+  stressor_tif_name <- stressor_tif_dict[stressor_choice]
+  stressor_tif_path_addition <- 'stressor_maps'
 
-stressor_folder_path <- paste(data_path, stressor_path_addition, )
-stressor_file_name <- paste(src, species_file_prefix, species_choice_formatted, 'tif)
+}
 
-stress_rast <- raster(here(stressor_folder_path, 'ocean_area_mol.tif'))
+stressor_tif_folder <- paste(data_path, '/', stressor_tif_path_addition, sep = '')
+stressor_tif_path <- paste(stressor_tif_folder, '/', stressor_tif_name, '.tif', sep = '')
 
+
+##### Format SPECIES range file name for calls
+species_range_file <- paste(src, '_spp_mol_', species_name_file, sep = '')
+species_range_csv_path <- paste(data_path, '/species_ranges/', species_range_file, '.csv', sep = '')
+
+species_range_df = read_csv(here(species_range_csv_path))
+
+# csv processing depends on the data source
+if (src == 'iucn') {
+  species_which <- 'presence'
+} else {          # for src == 'am'
+  species_range_df <- species_range_df %>% 
+    filter(prob >= 0.5)
+  species_which <- 'prob'
+}
+
+
+##### Capture species vulernability to the stressor
+species_vuln <- fish_info %>% 
+  filter(species == species_choice, stressor == stressor_choice) %>% 
+  pull(vuln)
+
+
+##### Generate rasters for stressor and species range
+stressor_rast <- raster(here(stressor_tif_path))
+# call helper function to make raster from csv
+# species_rast <- map_to_mol(species_range_df,
+#                            by = 'cell_id',
+#                            which = species_which,
+#                            xfm == NULL,
+#                            ocean_mask = TRUE)
+
+
+plot(stress_rast)
 
 ```
 
@@ -160,6 +239,12 @@ stress_rast <- raster(here(stressor_folder_path, 'ocean_area_mol.tif'))
 
 
 
+Things to ask casey:
+
+1. is the method I'm using to subset the data the best way of doing it for spatial data?
+2. Am I missing something, since there are more stressors than maps?
+3. How to treat similar maps like shipping large and small; combine somehow?
+4. how to use number codes for iucn sst maps?
 
 
 
