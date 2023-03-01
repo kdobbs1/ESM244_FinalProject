@@ -137,13 +137,13 @@ server <- function(input, output) {
   
   table_reactive <-reactive({
     fish_info %>% 
+      filter(vuln > 0.5) %>% 
       filter(species %in% input$pick_species2) %>% 
       filter(stressor %in% input$pick_stressor2) %>% 
-      filter(vuln > 0.5) %>% 
-      select(species, vuln)
+      select(species, stressor)
   })
   
- output$table<-renderTable(table_reactive(), )
+ output$table<-renderTable(table)
 }
 
 shinyApp(ui = ui, server = server)
