@@ -4,6 +4,7 @@ library(here)
 library(shinythemes)
 library(fontawesome)
 library(dplyr)
+library(knitr)
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
 region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
 #fish_name_info<-read_csv(here("fish_data_app/data", "ESM244FishSpecies.csv")) %>% 
@@ -56,7 +57,7 @@ ui <- fluidPage(
                                             # choices = unique(region_info$realm))
                          
                            ),
-                         mainPanel ("OUTPUT!", tableOutput('table'))
+                         mainPanel("OUTPUT!", tableOutput('table'))
                          )
                       ),
              tabPanel("Plotting", fluid=TRUE, icon=icon("fa-solid fa-chart-column", lib = "font-awesome"), # From glyphicon library,
@@ -153,7 +154,7 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   )
   
-  table_reactive <-reactive({
+  table_reactive <-reactiveValues({
     fish_info %>% 
       filter(vuln > 0.5) %>% 
       filter(species %in% input$pick_species2) %>% 
@@ -161,7 +162,8 @@ server <- function(input, output) {
       select(species, stressor)
   })
   
- output$table<-renderTable(table)
+ output$table<-renderTable(
+  kable(table_reactive))
 }
 
 shinyApp(ui = ui, server = server)
