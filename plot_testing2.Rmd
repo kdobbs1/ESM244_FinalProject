@@ -31,3 +31,17 @@ top_stressors
 
 ```
 
+
+
+```{r}
+pick_species2 <- 'brevoortia patronus'
+pick_stressor2 <- 'biomass_removal'
+
+table_df <- fish_info %>%
+      filter(species %in% pick_species2) %>%
+      arrange(desc(vuln)) %>% 
+      select(species, stressor, vuln)
+
+table_df
+```
+
