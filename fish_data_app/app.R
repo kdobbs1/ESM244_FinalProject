@@ -156,17 +156,19 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   )
   
+  table_data <- fish_info %>% 
+    select(species, stressor, vuln)
   
   table_reactive <- reactive({
-    fish_info %>%
+    table_data %>% 
       filter(species %in% input$pick_species2) %>% 
-      arrange(desc(vuln)) %>%
-      select(species, stressor, vuln)
+      arrange(desc(vuln))
   })
 
   output$table = renderDT({
-    datatable(table_reactive(), )
-  })
+    datatable(table_reactive()) %>% 
+      DT::formatStyle(columns = names(table_data), color="lightgray")
+  }) 
 }
 
 shinyApp(ui = ui, server = server)
