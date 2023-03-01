@@ -131,7 +131,7 @@ server <- function(input, output) {
   
   #output that creates text with species info
   output$selected_var<-renderText({
-    paste(input$pick_species1, "has an IUCN status of","and is most impacted by", most_impacted_stressor_reactive())
+    paste(input$pick_species1, "has an IUCN status of","and is most impacted by")
   })
   
   #output that creates text with stressor info
@@ -139,7 +139,7 @@ server <- function(input, output) {
     paste(input$pick_stressor1, ":", stressor_info_reactive())
     })
   
-  #output
+  #output that makes a reactive plot title
   output$plot_title<-renderText({
     paste("Impact of Stressors on", input$pick_species3)
   })
