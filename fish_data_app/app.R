@@ -8,6 +8,7 @@ fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
 region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
 #fish_name_info<-read_csv(here("fish_data_app/data", "ESM244FishSpecies.csv")) %>% 
  # mutate_all(funs=tolower)
+stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv"))
 
 
 ui <- fluidPage(
@@ -115,20 +116,37 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   
+  #reactive fxn for stressor info text
+  stressor_info_reactive <- reactive({
+    stressor_info %>% 
+      filter(stressor %in% input$pick_stressor1) 
+  })
+
+  #reactive fxn for highest vuln score for a species
+  most_impacted_stressor_reactive<- reactive({
+    fish_info %>% 
+      filter(species %in% input$pick_species1) %>% 
+      filter(max(vuln))
+  })
+  
+  #output that creates text with species info
   output$selected_var<-renderText({
-    paste("You have selected", input$pick_species1)
+    paste(input$pick_species1, "has an IUCN status of", most_impacted_stressor_reactive())
   })
   
+  #output that creates text with stressor info
   output$selected_var1<-renderText({
-    paste("You have selected", input$pick_stressor1)
+    paste(input$pick_stressor1, ":", stressor_info_reactive())
   })
   
+  #reactive fxn for plot
   fish_info_reactive <- reactive({
     fish_info %>% 
       filter(species %in% input$pick_species3) %>% 
       filter(stressor %in% input$pick_stressor3) 
   })
 
+  #output that creates plot
   output$fish_info_plot <- renderPlot(
     ggplot(data = fish_info_reactive(), aes(x = stressor, y=vuln)) +
       geom_col(aes(color = vuln, fill=vuln)) + theme_minimal()+
