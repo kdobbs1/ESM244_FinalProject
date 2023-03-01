@@ -89,7 +89,7 @@ ui <- fluidPage(
                                                         selected = c(fish_info$stressor[1], fish_info$stressor[5], fish_info$stressor[8]))
                         ),
                         
-                        mainPanel("Impact of Stressors on" , plotOutput('fish_info_plot'))
+                        mainPanel(textOutput("plot_title"), plotOutput('fish_info_plot'))
                         
                         
                       )
@@ -101,7 +101,7 @@ ui <- fluidPage(
                                                     label = "Choose stressor:",
                                                     choices = unique(fish_info$stressor)),
                                         checkboxGroupInput(inputId = "pick_species4",       #need unique inputIds per widget
-                                                           label = "Choose Specieseses:",
+                                                           label = "Choose Species:",
                                                            choices = unique(fish_info$species)),
                                         
                         ),
@@ -132,12 +132,17 @@ server <- function(input, output) {
   
   #output that creates text with species info
   output$selected_var<-renderText({
-    paste(input$pick_species1, "has an IUCN status of", most_impacted_stressor_reactive())
+    paste(input$pick_species1, "has an IUCN status of","and is most impacted by", most_impacted_stressor_reactive())
   })
   
   #output that creates text with stressor info
   output$selected_var1<-renderText({
     paste(input$pick_stressor1, ":", stressor_info_reactive())
+    })
+  
+  #output
+  output$plot_title<-renderText({
+    paste("Impact of Stressors on", input$pick_species3)
   })
   
   #reactive fxn for plot

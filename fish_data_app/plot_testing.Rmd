@@ -11,9 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(raster)
 library(tidyverse)
 library(terra)
+# library(tidyterra)        # for mapping terra rasters
 library(sf)
 library(tmap)
-library(Dict)
 library(here)
 ```
 
@@ -113,7 +113,7 @@ iucn_species_dict <- c('brevoortia patronus' = '191208',
                   'thunnus albacares' = '21857')
 
 # make dictionary with all stressor and file names
-stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_extreme should go?
+stressor_tif_dict <- c("air_temp" = "",   
                         "biomass_removal" = "",
                         "bycatch" = "bycatch_benthic_2017",  # there are two bycatch files with different suffixes?
                         "entanglement_macroplastic" = "",
@@ -121,7 +121,7 @@ stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_e
                         "habitat_loss_degradation" = "",
                         "inorganic_pollution" = "",
                         "light_pollution" = "light_2018",
-                        "marine_heat_waves" = "",
+                        "marine_heat_waves" = "sst_extremes_2020",             # is this where sst_extreme should go?
                         "noise_pollution" = "",
                         "ocean_acidification" = "ocean_acidification_2020",
                         "oceanographic" = "",
@@ -145,8 +145,8 @@ stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_e
 ```{r, message = FALSE}
 
 region_choice <- 1
-stressor_choice <- 'uv_radiation'
-species_choice <- c('oncorhynchus mykiss')
+stressor_choice <- c('uv_radiation')
+species_choice <- 'oncorhynchus mykiss'
 
 # format inputs for feeding to file chains
 species_choice_formatted <- sub(' ', '_', tolower(species_choice))
@@ -220,7 +220,7 @@ species_vuln <- fish_info %>%
 
 ##### Generate rasters for stressor and species range
 
-stressor_rast <- raster(here(stressor_tif_path))
+stressor_rast <- rast(here(stressor_tif_path))
 # call helper function to make raster from csv
 # species_rast <- map_to_mol(species_range_df,
 #                            by = 'cell_id',
@@ -229,7 +229,13 @@ stressor_rast <- raster(here(stressor_tif_path))
 #                            ocean_mask = TRUE)
 
 
+stressor_intersect <- terra::mask(stressor_rast, species_rast)
+product_rast <- stressor_intersect * species_rast
+
 plot(stressor_rast)
+
+plot(stressor_intersect)
+plot(product_rast)
 
 ```
 
@@ -240,8 +246,23 @@ We want to have a base color opacity for the species range equal to the vulnerab
 
 It might be best to make a series of raster files to reflect the color options we want. For example, for 1 species, we would need 2 rasters: 1 for stressor area EXCLUDING stressor overlap with species range, then 1 for species range INCLUDING overlap with stressor area. The species range should then be able to range in color from a minimum that reflects the base vulernability and the scaling with stressor exposure.
 
+First attempt with ggplot (can later maybe attempt with tmap)
 ```{r}
+species_stress_df_var <- 'stress'
+species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>% 
+#   rename(!!species_stress_df_var := stressor_tif_name)
+stressor_df <- as.data.frame(x = stressor_rast, xy = TRUE)
 
+
+#species_stress_map <- ggplot() + geom_spatraster(data = stressor_rast) + geom_spatraster(data = product_rast) + theme_minimal()
+
+species_stress_map <- ggplot(data = stressor_df, aes(x = x, y = y, fill = stressor_choice)) + 
+  geom_raster() + 
+  geom_raster(data = species_stress_df, fill = ')
+  coord_sf(expand = 0) +
+  theme_void() + 
+
+species_stress_map
 ```
 
 
