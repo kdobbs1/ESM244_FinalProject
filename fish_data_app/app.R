@@ -7,8 +7,7 @@ library(dplyr)
 library(knitr)
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
 region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
-#fish_name_info<-read_csv(here("fish_data_app/data", "ESM244FishSpecies.csv")) %>% 
- # mutate_all(funs=tolower)
+iucn_info<-read_csv(here("fish_data_app/data", "IUCN_data.csv"))
 stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv"))
 
 
@@ -32,13 +31,10 @@ ui <- fluidPage(
                                                 selected="sst_rise")
                                         ),
                         
-                        mainPanel ("OUTPUT!", textOutput("selected_var"), textOutput("selected_var1"))
-                        
-                        
+                        mainPanel ("Learn more about our data here:", textOutput("selected_var"), textOutput("selected_var1"))
                       )
                     ),
-             tabPanel("Summary Table", fluid=TRUE, 
-                      tags$i(class = "fa-solid fa-user"),
+             tabPanel("Summary Table", fluid=TRUE, tags$i(class = "fa-solid fa-user"), #icon is in the wrong location but it works?
                       #icon=icon("", lib = "font-awesome"),
                       sidebarLayout(
                         sidebarPanel (
