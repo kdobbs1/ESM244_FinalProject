@@ -23,7 +23,7 @@ library(here)
 ```{r}
 data_path <- 'fish_data_app/data'
 
-# source(here(data_path, 'helper_fxns.R'))
+source(here(data_path, 'helper_fxns.R'))
 ```
 
 
@@ -255,6 +255,7 @@ Things to ask casey:
 1. is the method I'm using to subset the data the best way of doing it for spatial data?
 2. Am I missing something, since there are more stressors than maps?
 3. How to treat similar maps like shipping large and small; combine somehow?
+      shipping large for wildlife strike
 4. Where do realm bounds come from?
 
 5. best way of operating on a list of fish species
@@ -263,4 +264,12 @@ Things to ask casey:
 
 
 
+
+drop stressors for which all fish have a vuln of 0
+
+
+
+
+
+maybe do a single species and then allow multiple stressors. Then we can show the total impact to the species as the sum of the stressors
 
