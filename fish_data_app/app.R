@@ -6,11 +6,13 @@ library(fontawesome)
 library(dplyr)
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
 region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
-fish_name_info<-read_csv(here("fish_data_app/data", "ESM244FishSpecies.csv")) %>% 
-  mutate_all(funs=tolower)
+#fish_name_info<-read_csv(here("fish_data_app/data", "ESM244FishSpecies.csv")) %>% 
+ # mutate_all(funs=tolower)
 
 
-ui <- fluidPage(theme=shinytheme("slate"),
+ui <- fluidPage(
+  tags$script(src = "https://kit.fontawesome.com/4ee2c5c2ed.js"), 
+  theme=shinytheme("slate"),
   navbarPage("Fun Fish Data World",
              tabPanel("Info", fluid=TRUE, icon=icon("globe-americas"),
                       sidebarLayout(
@@ -31,7 +33,9 @@ ui <- fluidPage(theme=shinytheme("slate"),
                         
                       )
                     ),
-             tabPanel("Summary Table", fluid=TRUE, icon=icon("", lib = "font-awesome"),
+             tabPanel("Summary Table", fluid=TRUE, 
+                      tags$i(class = "fa-solid fa-user"),
+                      #icon=icon("", lib = "font-awesome"),
                       sidebarLayout(
                         sidebarPanel (
                           titlePanel("Title Here"),
