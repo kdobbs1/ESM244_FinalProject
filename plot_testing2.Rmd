@@ -1,0 +1,33 @@
+---
+title: "plot_testing2"
+author: "K. Dobbs"
+date: "2023-03-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+library(readr)
+```
+
+
+
+```{r}
+fish_info <- read_csv(here("fish_data_app/data", "fish_info.csv"))
+
+fish_info1 <-select(fish_info, -c(iucn_sid, src, map_f))
+```
+
+```{r}
+top_stressors <- fish_info1 %>% 
+  filter(vuln > 0.5) %>% 
+  group_by(species) %>% 
+  summarize(stressor)
+ 
+top_stressors
+
+```
+
