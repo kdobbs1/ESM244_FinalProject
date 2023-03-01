@@ -113,7 +113,7 @@ iucn_species_dict <- c('brevoortia patronus' = '191208',
                   'thunnus albacares' = '21857')
 
 # make dictionary with all stressor and file names
-stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_extreme should go?
+stressor_tif_dict <- c("air_temp" = "",
                         "biomass_removal" = "",
                         "bycatch" = "bycatch_benthic_2017",  # there are two bycatch files with different suffixes?
                         "entanglement_macroplastic" = "",
@@ -121,7 +121,7 @@ stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_e
                         "habitat_loss_degradation" = "",
                         "inorganic_pollution" = "",
                         "light_pollution" = "light_2018",
-                        "marine_heat_waves" = "",
+                        "marine_heat_waves" = "sst_extremes_2020",    # is this where sst_extreme should go?
                         "noise_pollution" = "",
                         "ocean_acidification" = "ocean_acidification_2020",
                         "oceanographic" = "",
@@ -133,7 +133,7 @@ stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_e
                         "sst_rise" = "spp_max_temp",     # this is located in a different location than the others, and is only part of the file name
                         "storm_disturbance" = "",
                         "uv_radiation" = "uv_radiation_2020",
-                        "wildlife_strike" = ""
+                        "wildlife_strike" = "shipping_large_2021"
 )
 # usused maps: benth, bycatch_pelagic, direct_human, sea_level_rise, shipping
 
@@ -145,8 +145,8 @@ stressor_tif_dict <- c("air_temp" = "sst_extremes_2020",   # is this where sst_e
 ```{r, message = FALSE}
 
 region_choice <- 1
-stressor_choice <- 'uv_radiation'
-species_choice <- c('oncorhynchus mykiss')
+stressor_choice <- c('uv_radiation')
+species_choice <- 'oncorhynchus mykiss'
 
 # format inputs for feeding to file chains
 species_choice_formatted <- sub(' ', '_', tolower(species_choice))
@@ -197,7 +197,8 @@ stressor_tif_path <- paste(stressor_tif_folder, '/', stressor_tif_name, '.tif', 
 species_range_file <- paste(src, '_spp_mol_', species_name_file, sep = '')
 species_range_csv_path <- paste(data_path, '/species_ranges/', species_range_file, '.csv', sep = '')
 
-species_range_df = read_csv(here(species_range_csv_path))
+species_range_df = read_csv(here(species_range_csv_path)) %>% 
+  drop_na()
 
 # csv processing depends on the data source
 if (src == 'iucn') {
@@ -222,14 +223,14 @@ species_vuln <- fish_info %>%
 
 stressor_rast <- raster(here(stressor_tif_path))
 # call helper function to make raster from csv
-# species_rast <- map_to_mol(species_range_df,
-#                            by = 'cell_id',
-#                            which = species_which,
-#                            xfm == NULL,
-#                            ocean_mask = TRUE)
+species_rast <- map_to_mol(species_range_df,
+                            by = 'cell_id',
+                            which = species_which,
+                            ocean_mask = TRUE)
 
 
 plot(stressor_rast)
+plot(species_rast)
 
 ```
 

@@ -1,10 +1,15 @@
 ### These require tidyverse and terra packages to be loaded.
 
+
+data_path <- 'fish_data_app/data'
+
+
+
 get_mol_rast <- function() {
   ### This function creates a cell ID raster, based on the ocean area raster.
   ### For the species maps, the cell_id column corresponds to the values in
   ### this raster.
-  rast_base <- terra::rast(here::here('spatial/ocean_area_mol.tif')) %>%
+  rast_base <- terra::rast(here::here(data_path, 'spatial/ocean_area_mol.tif')) %>%
     terra::setValues(1:terra::ncell(.))
   return(rast_base)
 }
@@ -38,7 +43,7 @@ map_to_mol <- function(df, by = 'cell_id', which, xfm = NULL, ocean_mask = TRUE)
   
   if(ocean_mask) {
     out_rast <- out_rast %>%
-      terra::mask(terra::rast(here::here('spatial/ocean_area_mol.tif')))
+      terra::mask(terra::rast(here::here(data_path, 'spatial/ocean_area_mol.tif')))
   }
   return(out_rast)
 }
@@ -84,58 +89,59 @@ dt_join <- function (df1, df2, by, type, allow.cartesian = FALSE)  {
   return(as.data.frame(dt_full))
 }
 
-library(tidyverse)
-library(terra)
-library(here)
-
-cell_id_rast <- get_mol_rast()
-plot(cell_id_rast)
-
-ocean_a_rast <- terra::rast(here('spatial/ocean_area_mol.tif'))
-plot(ocean_a_rast)
-
-### load a couple of species maps as a csv of cell IDs - sourced from AquaMaps or IUCN
-spp_maps <- list.files(here('species_ranges'), full.names = TRUE)
-
-am_spp_maps <- spp_maps[str_detect(basename(spp_maps), '^am_')]
-  ### ^^^ this looks for filenames that start with "am_" to indicate AquaMaps
-
-ex_am_spp_map <- read_csv(am_spp_maps[1]) %>%
-  mutate(presence = ifelse(prob > 0.5, 1, NA))
-### note "prob" column - you might create a "presence" column that indicates
-### presence if prob > 0.5 (or some other threshold?) and absence otherwise.
-
-iucn_spp_maps <- spp_maps[str_detect(basename(spp_maps), '^iucn_')]
-### ^^^ this looks for filenames that start with "iucn_" to indicate IUCN maps
-ex_iucn_spp_map <- read_csv(iucn_spp_maps[2]) %>%
-  filter(presence != 5) %>%
-  mutate(presence = 1)
-### note "presence" column - these are IUCN codes for different time scales of
-### presence.  You should probably drop presence == 5 (extinct) and then
-### convert any remaining presence values to 1.
-
-
-### turn the ocean area raster into a dataframe
-ocean_a_df <- map_to_df(ocean_a_rast)
-
-### map an AquaMaps species to the ocean area dataframe
-am_spp_map_df <- ocean_a_df %>%
-  left_join(ex_am_spp_map, by = 'cell_id')
-
-### convert species dataframe to a raster
-am_spp_map_r <- map_to_mol(am_spp_map_df, which = 'presence')
-plot(am_spp_map_r, col = 'red')
-
-### map an IUCN species to the ocean area dataframe
-iucn_spp_map_df <- ocean_a_df %>%
-  left_join(ex_iucn_spp_map, by = 'cell_id')
-
-### convert to a raster
-iucn_spp_map_r <- map_to_mol(iucn_spp_map_df, which = 'presence')
-plot(iucn_spp_map_r, col = 'blue')
-
-### create a dataframe of multiple stressors and species presence
-str_rast_fs <- list.files(here('stressor_maps'), pattern = '.tif', full.names = TRUE)
-str_rasts <- rast(str_rast_fs[1:4])
-str_df <- map_to_df(str_rasts) %>%
-  left_join(ex_iucn_spp_map, by = 'cell_id')
+# 
+# library(tidyverse)
+# library(terra)
+# library(here)
+# 
+# cell_id_rast <- get_mol_rast()
+# plot(cell_id_rast)
+# 
+# ocean_a_rast <- terra::rast(here('spatial/ocean_area_mol.tif'))
+# plot(ocean_a_rast)
+# 
+# ### load a couple of species maps as a csv of cell IDs - sourced from AquaMaps or IUCN
+# spp_maps <- list.files(here('species_ranges'), full.names = TRUE)
+# 
+# am_spp_maps <- spp_maps[str_detect(basename(spp_maps), '^am_')]
+#   ### ^^^ this looks for filenames that start with "am_" to indicate AquaMaps
+# 
+# ex_am_spp_map <- read_csv(am_spp_maps[1]) %>%
+#   mutate(presence = ifelse(prob > 0.5, 1, NA))
+# ### note "prob" column - you might create a "presence" column that indicates
+# ### presence if prob > 0.5 (or some other threshold?) and absence otherwise.
+# 
+# iucn_spp_maps <- spp_maps[str_detect(basename(spp_maps), '^iucn_')]
+# ### ^^^ this looks for filenames that start with "iucn_" to indicate IUCN maps
+# ex_iucn_spp_map <- read_csv(iucn_spp_maps[2]) %>%
+#   filter(presence != 5) %>%
+#   mutate(presence = 1)
+# ### note "presence" column - these are IUCN codes for different time scales of
+# ### presence.  You should probably drop presence == 5 (extinct) and then
+# ### convert any remaining presence values to 1.
+# 
+# 
+# ### turn the ocean area raster into a dataframe
+# ocean_a_df <- map_to_df(ocean_a_rast)
+# 
+# ### map an AquaMaps species to the ocean area dataframe
+# am_spp_map_df <- ocean_a_df %>%
+#   left_join(ex_am_spp_map, by = 'cell_id')
+# 
+# ### convert species dataframe to a raster
+# am_spp_map_r <- map_to_mol(am_spp_map_df, which = 'presence')
+# plot(am_spp_map_r, col = 'red')
+# 
+# ### map an IUCN species to the ocean area dataframe
+# iucn_spp_map_df <- ocean_a_df %>%
+#   left_join(ex_iucn_spp_map, by = 'cell_id')
+# 
+# ### convert to a raster
+# iucn_spp_map_r <- map_to_mol(iucn_spp_map_df, which = 'presence')
+# plot(iucn_spp_map_r, col = 'blue')
+# 
+# ### create a dataframe of multiple stressors and species presence
+# str_rast_fs <- list.files(here('stressor_maps'), pattern = '.tif', full.names = TRUE)
+# str_rasts <- rast(str_rast_fs[1:4])
+# str_df <- map_to_df(str_rasts) %>%
+#   left_join(ex_iucn_spp_map, by = 'cell_id')
