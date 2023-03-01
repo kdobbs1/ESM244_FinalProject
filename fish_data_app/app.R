@@ -167,7 +167,7 @@ server <- function(input, output) {
 
   output$table = renderDT({
     datatable(table_reactive()) %>% 
-      DT::formatStyle(columns = names(table_data), color="lightgray")
+      DT::formatStyle(columns = names(table_data), color="lightgray") #column headers, show all rows at once
   }) 
 }
 
