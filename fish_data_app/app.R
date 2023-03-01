@@ -19,16 +19,18 @@ ui <- fluidPage(
                         sidebarPanel(
                           titlePanel("Title Here"),
                           #Select species
-                          radioButtons(inputId = "pick_species1",
+                          selectInput(inputId = "pick_species1",
                                                 label = "Choose species:",
-                                                choices = unique(fish_info$species)),
+                                                choices = unique(fish_info$species), 
+                                                selected = "oncorhynchus mykiss"),
                           #Select stressor
-                          radioButtons(inputId = "pick_stressor1",
+                          selectInput(inputId = "pick_stressor1",
                                                 label = "Choose stressor:",
-                                                choices = unique(fish_info$stressor))
+                                                choices = unique(fish_info$stressor), 
+                                                selected="sst_rise")
                                         ),
                         
-                        mainPanel ("OUTPUT!")
+                        mainPanel ("OUTPUT!", textOutput("selected_var"), textOutput("selected_var1"))
                         
                         
                       )
@@ -112,6 +114,14 @@ ui <- fluidPage(
 )
 
 server <- function(input, output) {
+  
+  output$selected_var<-renderText({
+    paste("You have selected", input$pick_species1)
+  })
+  
+  output$selected_var1<-renderText({
+    paste("You have selected", input$pick_stressor1)
+  })
   
   fish_info_reactive <- reactive({
     fish_info %>% 
