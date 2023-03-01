@@ -1,0 +1,11 @@
+﻿stressor,exp
+air_temp,
+bycatch,Total tonnes of discards for industrial and non-industrial fishing from 2015-2017.
+eutrophication_nutrient_pollution,"Intensity (tonnes/km2) of pollution from 2017 values of land-based nitrogen effluent from synthetic fertilizer and manure, human wastewater, and aquaculture."
+light_pollution,"Harmonized DMSP/VIIRS nighttime light data, using minimum value between 2017 and 2018 layers and dropping values below 10 (of 63) to reduce artifacts."
+ocean_acidification,Monthly aragonite saturation values (Ω) averaged to obtain annual estimate for 2017.
+organic_pollution,
+plastic_pollution_microplastic,
+sst_rise,"Monthly anomalies averaged to obtain annual mean sea level anomaly. 5 year mean of annual data, 2015 to 2019 used to smooth large yearly variation."
+uv_radiation,Number of extreme weekly events occurring  from 2016-2020 minus the extreme events from a reference period from 2005-2009.  An extreme event is defined as a week that exceeds the mean UV + 1sd calculated for each week from 2004-2016.
+,
