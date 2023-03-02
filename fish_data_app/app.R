@@ -162,6 +162,12 @@ server <- function(input, output) {
           iucn_reactive(), "and is most impacted by", most_impacted_stressor_reactive())
   })
   
+  #output for picture showing, need to work on this
+  # renderPlot({
+  #   ggdraw ()+
+  #     draw_image("path to my image")
+  # })
+  
   #output that creates text with stressor info
   output$selected_var1<-renderText({
     paste(input$pick_stressor1, ":", stressor_info_reactive())
