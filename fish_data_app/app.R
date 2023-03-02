@@ -7,14 +7,15 @@ library(dplyr)
 library(knitr)
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
 region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
-iucn_info<-read_csv(here("fish_data_app/data", "IUCN_data.csv"))
+iucn_info<-read_csv(here("fish_data_app/data", "IUCN_data.csv")) %>% 
+  janitor::clean_names()
 stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv"))
 
 
 ui <- fluidPage(
   tags$script(src = "https://kit.fontawesome.com/4ee2c5c2ed.js"), 
   theme=shinytheme("slate"),
-  navbarPage("Fun Fish Data World",
+  navbarPage("Relative Impacts of Stressors on Commercially Viable Fish",
              tabPanel("Info", fluid=TRUE, icon=icon("globe-americas"),
                       sidebarLayout(
                         sidebarPanel(
@@ -31,7 +32,7 @@ ui <- fluidPage(
                                                 selected="sst_rise")
                                         ),
                         
-                        mainPanel ("Learn more about our data here:", textOutput("selected_var"), textOutput("selected_var1"))
+                        mainPanel ("Learn more about our data here:", textOutput("species_info_text"), textOutput("selected_var1"))
                       )
                     ),
              tabPanel("Summary Table", fluid=TRUE, tags$i(class = "fa-solid fa-user"), #icon is in the wrong location but it works?
@@ -126,9 +127,16 @@ server <- function(input, output) {
       filter(max(vuln))
   })
   
+  #reactive function for IUCN status
+  iucn_reactive<- reactive({
+    iucn_info %>% 
+      filter(species %in% input$pick_species1) %>% 
+      as.list(iucn_info$iucn_status)
+  })
+  
   #output that creates text with species info
-  output$selected_var<-renderText({
-    paste(input$pick_species1, "has an IUCN status of","and is most impacted by")
+  output$species_info_text<-renderText({
+    paste(input$pick_species1, "has an IUCN status of", iucn_reactive(),"and is most impacted by")
   })
   
   #output that creates text with stressor info
@@ -155,16 +163,17 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   )
   
-  table_reactive <-reactiveValues({
-    fish_info %>% 
-      filter(vuln > 0.5) %>% 
-      filter(species %in% input$pick_species2) %>% 
-      filter(stressor %in% input$pick_stressor2) %>% 
-      select(species, stressor)
-  })
-  
- output$table<-renderTable(
-  kable(table_reactive))
+  #for whatever reason this code is stopping the app from running
+ #  table_reactive <-reactiveValues({
+ #    fish_info %>% 
+ #      filter(vuln > 0.5) %>% 
+ #      filter(species %in% input$pick_species2) %>% 
+ #      filter(stressor %in% input$pick_stressor2) %>% 
+ #      select(species, stressor)
+ #  })
+ #  
+ # output$table<-renderTable(
+ #  kable(table_reactive))
 }
 
 shinyApp(ui = ui, server = server)
