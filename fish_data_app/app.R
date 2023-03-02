@@ -5,6 +5,7 @@ library(shinythemes)
 library(fontawesome)
 library(dplyr)
 library(knitr)
+library(DT)
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
 region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
 iucn_info<-read_csv(here("fish_data_app/data", "IUCN_data.csv")) %>% 
@@ -41,20 +42,20 @@ ui <- fluidPage(
                         sidebarPanel (
                           titlePanel("Title Here"),
                           #select species
-                          checkboxGroupInput(inputId = "pick_species2",
+                          radioButtons(inputId = "pick_species2",
                                              label = "Choose species:",
                                              choices = unique(fish_info$species)),
                           #select stressor
-                          checkboxGroupInput(inputId = "pick_stressor2",
-                                             label = "Choose stressor",
-                                             choices = unique(fish_info$stressor))#,
+                          # checkboxGroupInput(inputId = "pick_stressor2",
+                          #                    label = "Choose stressor",
+                          #                    choices = unique(fish_info$stressor))#,
                           #select region
                           #checkboxGroupInput(inputId = "pick_region",
                                             # label = "Choose region:",
                                             # choices = unique(region_info$realm))
                          
                            ),
-                         mainPanel("OUTPUT!", tableOutput('table'))
+                         mainPanel("OUTPUT!", DTOutput('table'))
                          )
                       ),
              tabPanel("Plotting", fluid=TRUE, icon=icon("fa-solid fa-chart-column", lib = "font-awesome"), # From glyphicon library,
@@ -151,9 +152,9 @@ server <- function(input, output) {
   
   #reactive fxn for plot
   fish_info_reactive <- reactive({
-    fish_info %>% 
-      filter(species %in% input$pick_species3) %>% 
-      filter(stressor %in% input$pick_stressor3) 
+    fish_info %>%
+      filter(species %in% input$pick_species3) %>%
+      filter(stressor %in% input$pick_stressor3)
   })
 
   #output that creates plot
@@ -163,6 +164,7 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   )
   
+<<<<<<< HEAD
   #for whatever reason this code is stopping the app from running
  #  table_reactive <-reactiveValues({
  #    fish_info %>% 
@@ -174,6 +176,21 @@ server <- function(input, output) {
  #  
  # output$table<-renderTable(
  #  kable(table_reactive))
+=======
+  table_data <- fish_info %>% 
+    select(species, stressor, vuln)
+  
+  table_reactive <- reactive({
+    table_data %>% 
+      filter(species %in% input$pick_species2) %>% 
+      arrange(desc(vuln))
+  })
+
+  output$table = renderDT({
+    datatable(table_reactive()) %>% 
+      DT::formatStyle(columns = names(table_data), color="lightgray") #column headers, show all rows at once
+  }) 
+>>>>>>> 06862b09fa9a14c2769390a5de3370d3ca48a6bd
 }
 
 shinyApp(ui = ui, server = server)
