@@ -20,7 +20,7 @@ ui <- fluidPage(
              tabPanel("Info", fluid=TRUE, icon=icon("globe-americas"),
                       sidebarLayout(
                         sidebarPanel(
-                          titlePanel("Title Here"),
+                          titlePanel("Get information on different species and stressors"),
                           #Select species
                           selectInput(inputId = "pick_species1",
                                                 label = "Choose species:",
@@ -29,7 +29,7 @@ ui <- fluidPage(
                           #Select stressor
                           selectInput(inputId = "pick_stressor1",
                                                 label = "Choose stressor:",
-                                                choices = unique(fish_info$stressor), 
+                                                choices = unique(stressor_info$stressor), 
                                                 selected="sst_rise")
                                         ),
                         
@@ -115,29 +115,51 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   
+#info panel
   #reactive fxn for stressor info text
   stressor_info_reactive <- reactive({
     stressor_info %>% 
-      filter(stressor %in% input$pick_stressor1) 
+      filter(stressor %in% input$pick_stressor1) %>% 
+      select(exp)
   })
 
   #reactive fxn for highest vuln score for a species
   most_impacted_stressor_reactive<- reactive({
     fish_info %>% 
       filter(species %in% input$pick_species1) %>% 
-      filter(max(vuln))
+      select(stressor,vuln) %>% 
+      arrange(desc(vuln)) %>% 
+      slice(1) %>% 
+      select(stressor)
+      #what to do when there is a tie????????????
   })
   
-  #reactive function for IUCN status
+  #reactive fxn for IUCN status
   iucn_reactive<- reactive({
     iucn_info %>% 
-      filter(species %in% input$pick_species1) %>% 
-      as.list(iucn_info$iucn_status)
+      filter(scientific_name_lower %in% input$pick_species1) %>% 
+      select(iucn_status)
+  })
+  
+  #common name reactive
+  cm_reactive<- reactive({
+    iucn_info %>% 
+      filter(scientific_name_lower %in% input$pick_species1) %>% 
+      select(common_name)
+  })
+  
+  #scientific name upper case
+  sn_reactive<- reactive({
+    iucn_info %>% 
+      filter(scientific_name_lower %in% input$pick_species1) %>% 
+      select(scientific_name_cap)
   })
   
   #output that creates text with species info
+  #replaced input$pick_species1 with reactive function
   output$species_info_text<-renderText({
-    paste(input$pick_species1, "has an IUCN status of", iucn_reactive(),"and is most impacted by")
+    paste(sn_reactive(),"also known as", cm_reactive(), "has an IUCN status of", 
+          iucn_reactive(), "and is most impacted by", most_impacted_stressor_reactive())
   })
   
   #output that creates text with stressor info
@@ -145,6 +167,7 @@ server <- function(input, output) {
     paste(input$pick_stressor1, ":", stressor_info_reactive())
     })
   
+#plotting panel  
   #output that makes a reactive plot title
   output$plot_title<-renderText({
     paste("Impact of Stressors on", input$pick_species3)
@@ -164,33 +187,24 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   )
   
-<<<<<<< HEAD
-  #for whatever reason this code is stopping the app from running
- #  table_reactive <-reactiveValues({
- #    fish_info %>% 
- #      filter(vuln > 0.5) %>% 
- #      filter(species %in% input$pick_species2) %>% 
- #      filter(stressor %in% input$pick_stressor2) %>% 
- #      select(species, stressor)
- #  })
- #  
- # output$table<-renderTable(
- #  kable(table_reactive))
-=======
+#summary table panel  
+  #data for the table
   table_data <- fish_info %>% 
     select(species, stressor, vuln)
   
+  #reactive function for the table inputs
   table_reactive <- reactive({
     table_data %>% 
       filter(species %in% input$pick_species2) %>% 
       arrange(desc(vuln))
   })
 
+  #output that creates the table
   output$table = renderDT({
     datatable(table_reactive()) %>% 
       DT::formatStyle(columns = names(table_data), color="lightgray") #column headers, show all rows at once
   }) 
->>>>>>> 06862b09fa9a14c2769390a5de3370d3ca48a6bd
+
 }
 
 shinyApp(ui = ui, server = server)
