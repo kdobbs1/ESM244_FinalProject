@@ -211,6 +211,7 @@ server <- function(input, output) {
       DT::formatStyle(columns = names(table_data), color="lightgray") #column headers, show all rows at once
   }) 
 
+  # Casey: We're writing the code to generate the map outside of the app to begin with, in "plot_testing.Rmd". We'll add it in once it's complete behaving as expected.
 }
 
 shinyApp(ui = ui, server = server)
