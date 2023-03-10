@@ -6,6 +6,7 @@ library(fontawesome)
 library(dplyr)
 library(knitr)
 library(DT)
+library(ggplot2)
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv")) %>% 
   filter(stressor!="air_temp") %>% 
   filter(stressor!="inorganic_pollution") %>%
@@ -50,7 +51,7 @@ ui <- fluidPage(
                                                 selected="biomass_removal")
                                         ),
                         
-                        mainPanel ("Learn more about our data here:", textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"))
+                        mainPanel ("Learn more about our data here:", textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"), imageOutput("image"))
                       )
                     ),
              tabPanel("Summary Table", fluid=TRUE, tags$i(class = "fa-solid fa-user"), #icon is in the wrong location but it works?
@@ -206,9 +207,19 @@ server <- function(input, output) {
     })
   
   #output for picture showing, need to work on this
-  # output$image<-renderPlot({
+  output$image<- renderImage({
+    
+    list(src = "www/brevoortia_patronus.jpg",
+         width = "100%",
+         height = 330)
+    
+  }, deleteFile = F)
+    
+    
+  #   renderPlot({
   #   ggdraw ()+
-  #     draw_image("path to my image")
+  #     draw_image(here("fish_data_app/data/pics", "brevoortia_patronus.jpg"))
+  #     #draw_image("path to my image")
   # })
 
 #plotting panel  
