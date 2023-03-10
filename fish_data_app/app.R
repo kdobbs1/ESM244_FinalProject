@@ -10,8 +10,17 @@ fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
 region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
 iucn_info<-read_csv(here("fish_data_app/data", "IUCN_data.csv")) %>% 
   janitor::clean_names()
-stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv"))
-
+stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>% 
+  filter(stressor!="air_temp") %>% 
+  filter(stressor!="inorganic_pollution") %>%
+  filter(stressor!="oceanographic") %>%
+  filter(stressor!="poisons_toxins") %>%
+  filter(stressor!="organic_pollution") %>%
+  filter(stressor!="salinity") %>%
+  filter(stressor!="storm_disturbance")
+  #filter(-c("air_temp", "inorganic_pollution", "oceanographic", "poisons_toxins", 
+#"organic_pollution", "salinity", "sedimentation", "storm_disturbance"))
+head(stressor_info)
 
 ui <- fluidPage(
   tags$script(src = "https://kit.fontawesome.com/4ee2c5c2ed.js"), 
