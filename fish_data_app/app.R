@@ -124,13 +124,14 @@ server <- function(input, output) {
   })
 
   #reactive fxn for highest vuln score for a species
-  most_impacted_stressor_reactive<- reactive({
+  most_impacted_stressor_reactive <- reactive({
     fish_info %>% 
       filter(species %in% input$pick_species1) %>% 
       select(stressor,vuln) %>% 
       arrange(desc(vuln)) %>% 
       slice(1) %>% 
-      select(stressor)
+      select(stressor) %>% 
+      mutate(stressor = str_replace(stressor, pattern = "_", replacement = " "))
       #what to do when there is a tie????????????
   })
   
@@ -158,8 +159,10 @@ server <- function(input, output) {
   #output that creates text with species info
   #replaced input$pick_species1 with reactive function
   output$species_info_text<-renderText({
-    paste(sn_reactive(),"also known as", cm_reactive(), "has an IUCN status of", 
-          iucn_reactive(), "and is most impacted by", most_impacted_stressor_reactive())
+    paste(sn_reactive(),", also known as", cm_reactive(), ", has an IUCN status of", 
+          iucn_reactive(), ". Of the stressors tested,", sn_reactive(), " is most vulnerable to", 
+          most_impacted_stressor_reactive(), ". This means that if the species was exposed to the same intensity of 
+          all stressors tested, then", most_impacted_stressor_reactive() , "will have the greatest impact.")
   })
   
   #output for picture showing, need to work on this
@@ -168,9 +171,11 @@ server <- function(input, output) {
   #     draw_image("path to my image")
   # })
   
+  #input$pick_stressor1 <- mutate(stressor = str_replace(stressor, pattern = "_", replacement = " "))
+  
   #output that creates text with stressor info
   output$selected_var1<-renderText({
-    paste(input$pick_stressor1, ":", stressor_info_reactive())
+    paste(input$pick_stressor1, " is calculated according to the following:", stressor_info_reactive())
     })
   
 #plotting panel  
