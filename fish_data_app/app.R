@@ -6,7 +6,14 @@ library(fontawesome)
 library(dplyr)
 library(knitr)
 library(DT)
-fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
+fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv")) %>% 
+  filter(stressor!="air_temp") %>% 
+  filter(stressor!="inorganic_pollution") %>%
+  filter(stressor!="oceanographic") %>%
+  filter(stressor!="poisons_toxins") %>%
+  filter(stressor!="organic_pollution") %>%
+  filter(stressor!="salinity") %>%
+  filter(stressor!="storm_disturbance")
 region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
 iucn_info<-read_csv(here("fish_data_app/data", "IUCN_data.csv")) %>% 
   janitor::clean_names()
@@ -18,9 +25,6 @@ stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>%
   filter(stressor!="organic_pollution") %>%
   filter(stressor!="salinity") %>%
   filter(stressor!="storm_disturbance")
-  #filter(-c("air_temp", "inorganic_pollution", "oceanographic", "poisons_toxins", 
-#"organic_pollution", "salinity", "sedimentation", "storm_disturbance"))
-head(stressor_info)
 
 ui <- fluidPage(
   tags$script(src = "https://kit.fontawesome.com/4ee2c5c2ed.js"), 
@@ -39,7 +43,7 @@ ui <- fluidPage(
                           selectInput(inputId = "pick_stressor1",
                                                 label = "Choose stressor:",
                                                 choices = unique(stressor_info$stressor), 
-                                                selected="sst_rise")
+                                                selected="biomass_removal")
                                         ),
                         
                         mainPanel ("Learn more about our data here:", textOutput("species_info_text"), textOutput("selected_var1"))
@@ -169,7 +173,7 @@ server <- function(input, output) {
   stressor_clean_reactive <- reactive({
     stressor_info %>% 
     filter(stressor %in% input$pick_stressor1) %>% 
-    mutate(stressor = str_replace(stressor, pattern = "_", replacement = " ")) %>% 
+    mutate(stressor = str_replace_all(stressor, pattern = "_", replacement = " ")) %>% 
     select(stressor)
   })
   
