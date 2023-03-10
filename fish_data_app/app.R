@@ -181,6 +181,11 @@ server <- function(input, output) {
     select(stressor)
   })
   
+  #reactive to produce file path of images
+  # pic_reactive <- reactive({
+  #   
+  # })
+  
   #output with basic info about data that doesn't change
   output$info<-renderText({
     paste("This data was collected by Casey O'Hara.")
@@ -205,7 +210,7 @@ server <- function(input, output) {
   #   ggdraw ()+
   #     draw_image("path to my image")
   # })
-  
+
 #plotting panel  
   #output that makes a reactive plot title
   output$plot_title<-renderText({
