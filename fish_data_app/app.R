@@ -28,8 +28,11 @@ stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>%
 
 ui <- fluidPage(
   tags$script(src = "https://kit.fontawesome.com/4ee2c5c2ed.js"), 
-  #theme=shinytheme("slate"),
-  theme = "ocean.css",
+  # tags$head(
+  #   tags$link(rel = "stylesheet", type = "text/css", href = "fish.css")
+  # ),
+  theme=shinytheme("slate"),
+ # theme = "ocean.css",
   navbarPage("Relative Impacts of Stressors on Commercially Viable Fish",
              tabPanel("Info", fluid=TRUE, icon=icon("globe-americas"),
                       sidebarLayout(
@@ -47,7 +50,7 @@ ui <- fluidPage(
                                                 selected="biomass_removal")
                                         ),
                         
-                        mainPanel ("Learn more about our data here:", textOutput("species_info_text"), textOutput("selected_var1"))
+                        mainPanel ("Learn more about our data here:", textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"))
                       )
                     ),
              tabPanel("Summary Table", fluid=TRUE, tags$i(class = "fa-solid fa-user"), #icon is in the wrong location but it works?
@@ -178,6 +181,11 @@ server <- function(input, output) {
     select(stressor)
   })
   
+  #output with basic info about data that doesn't change
+  output$info<-renderText({
+    paste("This data was collected by Casey O'Hara.")
+  })
+  
   #output that creates text with species info
   #replaced input$pick_species1 with reactive function
   output$species_info_text<-renderText({
@@ -187,16 +195,16 @@ server <- function(input, output) {
           all stressors tested, then", most_impacted_stressor_reactive() , "will have the greatest impact.")
   })
   
-  #output for picture showing, need to work on this
-  # renderPlot({
-  #   ggdraw ()+
-  #     draw_image("path to my image")
-  # })
-  
   #output that creates text with stressor info
   output$selected_var1<-renderText({
     paste(stressor_clean_reactive(), " is calculated according to the following:", stressor_info_reactive())
     })
+  
+  #output for picture showing, need to work on this
+  # output$image<-renderPlot({
+  #   ggdraw ()+
+  #     draw_image("path to my image")
+  # })
   
 #plotting panel  
   #output that makes a reactive plot title
