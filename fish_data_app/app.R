@@ -28,7 +28,8 @@ stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>%
 
 ui <- fluidPage(
   tags$script(src = "https://kit.fontawesome.com/4ee2c5c2ed.js"), 
-  theme=shinytheme("slate"),
+  #theme=shinytheme("slate"),
+  theme = "ocean.css",
   navbarPage("Relative Impacts of Stressors on Commercially Viable Fish",
              tabPanel("Info", fluid=TRUE, icon=icon("globe-americas"),
                       sidebarLayout(
