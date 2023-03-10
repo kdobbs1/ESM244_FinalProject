@@ -14,6 +14,7 @@ library(terra)
 # library(tidyterra)        # for mapping terra rasters
 library(sf)
 library(tmap)
+library(ggnewscale)
 library(here)
 ```
 
@@ -204,7 +205,8 @@ if (src == 'iucn') {
   species_which <- 'presence'
 } else {          # for src == 'am'
   species_range_df <- species_range_df %>% 
-    filter(prob >= 0.5)
+    filter(prob >= 0.5) %>% 
+    drop_na()
   species_which <- 'prob'
 }
 
@@ -222,20 +224,20 @@ species_vuln <- fish_info %>%
 
 stressor_rast <- rast(here(stressor_tif_path))
 # call helper function to make raster from csv
-# species_rast <- map_to_mol(species_range_df,
-#                            by = 'cell_id',
-#                            which = species_which,
-#                            xfm == NULL,
-#                            ocean_mask = TRUE)
+species_rast <- map_to_mol(species_range_df,
+                           by = 'cell_id',
+                           which = species_which,
+                           ocean_mask = TRUE)
 
 
-stressor_intersect <- terra::mask(stressor_rast, species_rast)
-product_rast <- stressor_intersect * species_rast
+# Make separate rasters that are mutually exclusive; for species stress and stressor
+stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the stressor map to where the species range is
+product_rast <- stressor_intersect * species_rast                   # calculate species stress
+inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)    # make map of stressor that excludes species stress
 
-plot(stressor_rast)
 
-plot(stressor_intersect)
 plot(product_rast)
+plot(inverse_product_rast)
 
 ```
 
@@ -248,23 +250,32 @@ It might be best to make a series of raster files to reflect the color options w
 
 First attempt with ggplot (can later maybe attempt with tmap)
 ```{r}
-species_stress_df_var <- 'stress'
+# species_stress_df_var <- 'stress'
 species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>% 
-#   rename(!!species_stress_df_var := stressor_tif_name)
-stressor_df <- as.data.frame(x = stressor_rast, xy = TRUE)
+  rename('stress' = 'uv_radiation_2020')
+#   rename(!!species_stress_df_var := stressor_tif_name)                # NEED TO GET THIS GENERAL FUNCTION WORKING
+stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>% 
+  rename('stress' = 'uv_radiation_2020')
 
 
 #species_stress_map <- ggplot() + geom_spatraster(data = stressor_rast) + geom_spatraster(data = product_rast) + theme_minimal()
 
-species_stress_map <- ggplot(data = stressor_df, aes(x = x, y = y, fill = stressor_choice)) + 
-  geom_raster() + 
-  geom_raster(data = species_stress_df, fill = ')
+species_stress_map <- ggplot() + 
+  geom_raster(data = species_stress_df, aes(x = x, y = y, color = stress, fill = stress)) +
+  # scale_color_viridis_c() +
+  scale_fill_gradient(low = 'green1', high = 'green4') +
+  new_scale_color() +
+  geom_raster(data = stressor_df, aes(x = x, y = y, fill = stress)) + 
+  scale_color_distiller('stress', palette = "Spectral") +
   coord_sf(expand = 0) +
-  theme_void() + 
+  theme_void()
 
 species_stress_map
 ```
 
+Because of overlap, we may only be able to show 1 stressor and 1 species; unless species dont overlap
+
+Another idea: Make two versions of stressor where one is the intersect with species range and one is the opposite, then just do the OUTLINE of the species ranges. This way, only the region where stressor and species overlap require a different color
 
 
 
