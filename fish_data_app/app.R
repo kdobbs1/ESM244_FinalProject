@@ -156,6 +156,14 @@ server <- function(input, output) {
       select(scientific_name_cap)
   })
   
+  #reactive to remove _ from stressor for text output
+  stressor_clean_reactive <- reactive({
+    stressor_info %>% 
+    filter(stressor %in% input$pick_stressor1) %>% 
+    mutate(stressor = str_replace(stressor, pattern = "_", replacement = " ")) %>% 
+    select(stressor)
+  })
+  
   #output that creates text with species info
   #replaced input$pick_species1 with reactive function
   output$species_info_text<-renderText({
@@ -171,11 +179,9 @@ server <- function(input, output) {
   #     draw_image("path to my image")
   # })
   
-  #input$pick_stressor1 <- mutate(stressor = str_replace(stressor, pattern = "_", replacement = " "))
-  
   #output that creates text with stressor info
   output$selected_var1<-renderText({
-    paste(input$pick_stressor1, " is calculated according to the following:", stressor_info_reactive())
+    paste(stressor_clean_reactive(), " is calculated according to the following:", stressor_info_reactive())
     })
   
 #plotting panel  
