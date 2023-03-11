@@ -38,7 +38,7 @@ ui <- fluidPage(
              tabPanel("Info", fluid=TRUE, icon=icon("globe-americas"),
                       sidebarLayout(
                         sidebarPanel(
-                          titlePanel("Learn about the different species and stressors in the dataset"),
+                          titlePanel("Learn more about the data here:"),
                           #Select species
                           selectInput(inputId = "pick_species1",
                                                 label = "Choose species:",
@@ -51,7 +51,7 @@ ui <- fluidPage(
                                                 selected="biomass_removal")
                                         ),
                         
-                        mainPanel ("Learn more about our data here:", textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"), imageOutput("image"), textOutput("test"))
+                        mainPanel (textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"), imageOutput("image"), textOutput("test"))
                 #
                       )
                     ),
