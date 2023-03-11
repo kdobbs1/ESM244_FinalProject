@@ -51,7 +51,8 @@ ui <- fluidPage(
                                                 selected="biomass_removal")
                                         ),
                         
-                        mainPanel ("Learn more about our data here:", textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"), imageOutput("image"))
+                        mainPanel ("Learn more about our data here:", textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"), imageOutput("image"), textOutput("test"))
+                
                       )
                     ),
              tabPanel("Summary Table", fluid=TRUE, tags$i(class = "fa-solid fa-user"), #icon is in the wrong location but it works?
@@ -183,9 +184,15 @@ server <- function(input, output) {
   })
   
   #reactive to produce file path of images
-  # pic_reactive <- reactive({
-  #   
-  # })
+  pic_reactive <- reactive({
+    fish_info %>% 
+      filter(species %in% input$pick_species1)
+    #"www/brevoortia_patronus.jpg"
+  })
+  
+  #pic_file<-paste("www/",toString(pic_reactive()),".jpg")
+  pic_file<-paste("www/","brevoortia_patronus",".jpg") %>% 
+    str_replace_all(pattern = " ", replacement = "")
   
   #output with basic info about data that doesn't change
   output$info<-renderText({
@@ -208,13 +215,16 @@ server <- function(input, output) {
   
   #output for picture showing, need to work on this
   output$image<- renderImage({
-    
-    list(src = "www/brevoortia_patronus.jpg",
+    list(src = pic_file,
+         #src = "www/brevoortia_patronus.jpg",
          width = "100%",
          height = 330)
-    
   }, deleteFile = F)
     
+  #output to test image stuff
+  output$test<-renderText({
+    paste(pic_file)
+  })
     
   #   renderPlot({
   #   ggdraw ()+
