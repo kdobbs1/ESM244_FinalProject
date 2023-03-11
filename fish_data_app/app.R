@@ -52,7 +52,7 @@ ui <- fluidPage(
                                         ),
                         
                         mainPanel ("Learn more about our data here:", textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"), imageOutput("image"), textOutput("test"))
-                
+                #
                       )
                     ),
              tabPanel("Summary Table", fluid=TRUE, tags$i(class = "fa-solid fa-user"), #icon is in the wrong location but it works?
@@ -183,17 +183,6 @@ server <- function(input, output) {
     select(stressor)
   })
   
-  #reactive to produce file path of images
-  pic_reactive <- reactive({
-    fish_info %>% 
-      filter(species %in% input$pick_species1)
-    #"www/brevoortia_patronus.jpg"
-  })
-  
-  #pic_file<-paste("www/",toString(pic_reactive()),".jpg")
-  pic_file<-paste("www/","brevoortia_patronus",".jpg") %>% 
-    str_replace_all(pattern = " ", replacement = "")
-  
   #output with basic info about data that doesn't change
   output$info<-renderText({
     paste("This data was collected by Casey O'Hara.")
@@ -213,7 +202,25 @@ server <- function(input, output) {
     paste(stressor_clean_reactive(), " is calculated according to the following:", stressor_info_reactive())
     })
   
-  #output for picture showing, need to work on this
+  #reactive to produce file path of images
+  pic_reactive <- reactive({
+    iucn_info %>% 
+      filter(scientific_name_lower %in% input$pick_species1) %>% 
+    # fish_info %>% 
+    #   filter(species %in% input$pick_species1) %>% 
+      select(scientific_name_lower) %>% 
+      #fish_info[1,] %>% 
+      toString() %>% 
+      str_replace_all(pattern = " ", replacement = "_")
+  })
+  
+   pic_file<-paste("www/","chanos_chanos",".jpg") %>% 
+     str_replace_all(pattern = " ", replacement = "")
+ #pic_file<-paste("www/", pic_reactive(),".jpg") #%>%
+  #  str_replace_all(pattern = " ", replacement = "")
+  
+  
+  #output for picture showing
   output$image<- renderImage({
     list(src = pic_file,
          #src = "www/brevoortia_patronus.jpg",
@@ -223,7 +230,7 @@ server <- function(input, output) {
     
   #output to test image stuff
   output$test<-renderText({
-    paste(pic_file)
+    paste(pic_reactive())
   })
     
   #   renderPlot({
