@@ -144,15 +144,31 @@ server <- function(input, output) {
 
   #reactive fxn for highest vuln score for a species
   most_impacted_stressor_reactive <- reactive({
-    fish_info %>% 
-      filter(species %in% input$pick_species1) %>% 
-      select(stressor,vuln) %>% 
-      arrange(desc(vuln)) %>% 
-      slice(1) %>% 
-      select(stressor) %>% 
+    fish_info %>%
+      filter(species %in% input$pick_species1) %>%
+      select(stressor,vuln) %>%
+      arrange(desc(vuln)) %>%
+      slice(1) %>%
+      select(stressor) %>%
       mutate(stressor = str_replace(stressor, pattern = "_", replacement = " "))
       #what to do when there is a tie????????????
   })
+
+  ###OFFICE HOURS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  #trying to make an expression that will slice whichever vulnerability scores are highest
+  #depending on if there is a tie or not
+  #reactive fxn for highest vuln score for a species
+  # most_impacted_stressor_reactive <- reactive({
+  #   fish_info %>% 
+  #     filter(species %in% input$pick_species1) %>% 
+  #     select(stressor,vuln) %>% 
+  #     arrange(desc(vuln)) %>% 
+  #     ifelse(fish_info$vuln[1]==fish_info$vuln[2], slice(2), slice(1))
+  #     slice(1) %>% 
+  #     select(stressor) %>% 
+  #     mutate(stressor = str_replace(stressor, pattern = "_", replacement = " "))
+  #   #what to do when there is a tie????????????
+  # })
   
   #reactive fxn for IUCN status
   iucn_reactive<- reactive({
@@ -221,11 +237,12 @@ server <- function(input, output) {
       str_replace_all(pattern = " ", replacement = "_")
   })
   
+  #############OFFICE HOURS
   #but this does not!!!!
-   pic_file<-paste("www/","chanos_chanos",".jpg") %>% 
-     str_replace_all(pattern = " ", replacement = "")
-  #pic_file<-paste("www/", pic_reactive(),".jpg") %>%
-   #str_replace_all(pattern = " ", replacement = "")
+  pic_file<-paste("www/","chanos_chanos",".jpg") %>%
+   str_replace_all(pattern = " ", replacement = "")
+  # pic_file<-paste("www/", pic_reactive(),".jpg") %>%
+  #  str_replace_all(pattern = " ", replacement = "")
   
   
   #output for picture showing
@@ -236,6 +253,7 @@ server <- function(input, output) {
          height = 330)
   }, deleteFile = F)
     
+  #Can remove this once the image is reactive
   #output to test image stuff
   output$test<-renderText({
     paste(pic_reactive())
