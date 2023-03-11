@@ -38,7 +38,7 @@ ui <- fluidPage(
              tabPanel("Info", fluid=TRUE, icon=icon("globe-americas"),
                       sidebarLayout(
                         sidebarPanel(
-                          titlePanel("Get information on different species and stressors"),
+                          titlePanel("Learn about the different species and stressors in the dataset"),
                           #Select species
                           selectInput(inputId = "pick_species1",
                                                 label = "Choose species:",
@@ -185,7 +185,13 @@ server <- function(input, output) {
   
   #output with basic info about data that doesn't change
   output$info<-renderText({
-    paste("This data was collected by Casey O'Hara.")
+    paste("This dataset was collected by Casey O'Hara. It examines the risk of impact 
+          of different environmental stressors on different marine species by intersecting 
+          spatial distributions according to each species' vulnerability to a given stressor.
+          This analysis specifically explore the vulnerability of high commercial value
+          marine fish species to different environmental stressors. You can learn more 
+          about the species and how the stressors were defined by changing the inputs 
+          in the panel on the left.")
   })
   
   #output that creates text with species info
@@ -203,6 +209,7 @@ server <- function(input, output) {
     })
   
   #reactive to produce file path of images
+  #this works
   pic_reactive <- reactive({
     iucn_info %>% 
       filter(scientific_name_lower %in% input$pick_species1) %>% 
@@ -214,10 +221,11 @@ server <- function(input, output) {
       str_replace_all(pattern = " ", replacement = "_")
   })
   
+  #but this does not!!!!
    pic_file<-paste("www/","chanos_chanos",".jpg") %>% 
      str_replace_all(pattern = " ", replacement = "")
- #pic_file<-paste("www/", pic_reactive(),".jpg") #%>%
-  #  str_replace_all(pattern = " ", replacement = "")
+  #pic_file<-paste("www/", pic_reactive(),".jpg") %>%
+   #str_replace_all(pattern = " ", replacement = "")
   
   
   #output for picture showing
