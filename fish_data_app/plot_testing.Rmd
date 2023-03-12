@@ -14,6 +14,8 @@ library(terra)
 # library(tidyterra)        # for mapping terra rasters
 library(sf)
 library(tmap)
+library(mapproj)
+library(maptools)
 library(ggnewscale)
 library(here)
 ```
@@ -140,6 +142,7 @@ stressor_tif_dict <- c("air_temp" = "",
 
 ```
 
+### Make region limits
 
 ### Extract stressor and species specific rasters
 
@@ -221,13 +224,20 @@ species_vuln <- fish_info %>%
 
 
 ##### Generate rasters for stressor and species range
+# Also change the CRS
+crs_proj <- 'epsg:4326'
 
-stressor_rast <- rast(here(stressor_tif_path))
+stressor_rast <- rast(here(stressor_tif_path)) %>% 
+  project(crs_proj)
+
+
+
 # call helper function to make raster from csv
 species_rast <- map_to_mol(species_range_df,
                            by = 'cell_id',
                            which = species_which,
-                           ocean_mask = TRUE)
+                           ocean_mask = TRUE) %>% 
+  project(crs_proj)  
 
 
 # Make separate rasters that are mutually exclusive; for species stress and stressor
@@ -235,9 +245,6 @@ stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the s
 product_rast <- stressor_intersect * species_rast                   # calculate species stress
 inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)    # make map of stressor that excludes species stress
 
-
-plot(product_rast)
-plot(inverse_product_rast)
 
 ```
 
@@ -251,27 +258,74 @@ It might be best to make a series of raster files to reflect the color options w
 First attempt with ggplot (can later maybe attempt with tmap)
 ```{r}
 # species_stress_df_var <- 'stress'
-species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>% 
-  rename('stress' = 'uv_radiation_2020')
+species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>%
+  rename('species_stress' = 'uv_radiation_2020')
 #   rename(!!species_stress_df_var := stressor_tif_name)                # NEED TO GET THIS GENERAL FUNCTION WORKING
-stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>% 
+stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
   rename('stress' = 'uv_radiation_2020')
 
-
-#species_stress_map <- ggplot() + geom_spatraster(data = stressor_rast) + geom_spatraster(data = product_rast) + theme_minimal()
-
-species_stress_map <- ggplot() + 
-  geom_raster(data = species_stress_df, aes(x = x, y = y, color = stress, fill = stress)) +
+species_stress_map <- ggplot() +
+  geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
   # scale_color_viridis_c() +
-  scale_fill_gradient(low = 'green1', high = 'green4') +
-  new_scale_color() +
-  geom_raster(data = stressor_df, aes(x = x, y = y, fill = stress)) + 
-  scale_color_distiller('stress', palette = "Spectral") +
+  scale_fill_gradient(low = 'orange1', high = 'red4') +
+  new_scale_fill() +
+  geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+  scale_fill_gradient(low = 'cyan1', high = 'blue4') +
+  #scale_color_distiller('stress', palette = "Spectral") +
+  # coord_sf(expand = 0) +
+  # coord_cartesian(xlim = c(-13000000, -8000000), ylim = c(0, 10000000)) +
+  theme_void()
+
+species_stress_map
+
+```
+
+```{r}
+# Attempting to use sf instead of geom_raster
+
+# species_stress_poly <- terra::as.polygons(product_rast) %>% 
+#   st_as_sf()
+# 
+# stress_poly <- terra::as.polygons(product_rast) %>% 
+#   st_as_sf()
+# 
+# species_stress_map <- ggplot() + 
+#   geom_sf(data = species_stress_poly, fill = 'grey30', color = 'black') +
+#   # scale_color_viridis_c() +
+#   scale_fill_gradient(low = 'orange1', high = 'red4') +
+#   new_scale_fill() +
+#   geom_raster(data = stressor_df, aes(x = x, y = y, fill = stress)) + 
+#   scale_fill_gradient(low = 'cyan1', high = 'blue4') +
+#   #scale_color_distiller('stress', palette = "Spectral") +
+#   coord_sf(expand = 0) +
+#   theme_void()
+# 
+# species_stress_map
+```
+
+```{r}
+# Attempting to make stressor map with species range polygons overlayed
+# need a way of making fill opaque
+
+stressor_df <- as.data.frame(x = stressor_rast, xy = TRUE) %>%
+  rename('stress' = 'uv_radiation_2020')
+
+species_poly <- terra::as.polygons(species_rast) %>%
+  st_as_sf()
+
+species_stress_map <- ggplot() +
+  geom_raster(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+  scale_fill_gradient(low = 'cyan1', high = 'blue4') +
+  #scale_color_distiller('stress', palette = "Spectral") +
+  new_scale_fill() +
+  geom_sf(data = species_stress_poly, color = 'black') +
+  # scale_color_viridis_c() +
   coord_sf(expand = 0) +
   theme_void()
 
 species_stress_map
 ```
+
 
 Because of overlap, we may only be able to show 1 stressor and 1 species; unless species dont overlap
 
