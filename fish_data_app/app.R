@@ -15,7 +15,8 @@ fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv")) %>%
   filter(stressor!="poisons_toxins") %>%
   filter(stressor!="organic_pollution") %>%
   filter(stressor!="salinity") %>%
-  filter(stressor!="storm_disturbance")
+  filter(stressor!="storm_disturbance")%>% 
+  mutate(stressor = str_replace_all(stressor, pattern = "_", replacement = " "))
 region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
 iucn_info<-read_csv(here("fish_data_app/data", "IUCN_data.csv")) %>% 
   janitor::clean_names()
