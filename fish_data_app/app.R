@@ -239,30 +239,26 @@ server <- function(input, output) {
       select(scientific_name_lower) %>% 
       #fish_info[1,] %>% 
       toString() %>% 
-      str_replace_all(pattern = " ", replacement = "_")
+      str_replace_all(pattern = " ", replacement = "_") 
   })
   
   #############OFFICE HOURS
+  #this line shows me that the next should work
+  #pic_file<-paste("www/","chanos_chanos",".jpg", sep="")
   #but this does not!!!!
-  pic_file<-paste("www/","chanos_chanos",".jpg") %>%
-   str_replace_all(pattern = " ", replacement = "")
-  # pic_file<-paste("www/", pic_reactive(),".jpg") %>%
-  #  str_replace_all(pattern = " ", replacement = "")
-  
+  pic_file<-reactive({
+    paste("www/", pic_reactive(),".jpg", sep="") %>% 
+    as.character()
+  })
   
   #output for picture showing
   output$image<- renderImage({
-    list(src = pic_file,
-         #src = "www/brevoortia_patronus.jpg",
+    list(src = pic_file(),
+         #src = "www/brevoortia_patronus.jpg", #how I know this should work
          width = "100%",
          height = 330)
   }, deleteFile = F)
     
-  #Can remove this once the image is reactive
-  #output to test image stuff
-  output$test<-renderText({
-    paste(pic_reactive())
-  })
     
   #   renderPlot({
   #   ggdraw ()+
