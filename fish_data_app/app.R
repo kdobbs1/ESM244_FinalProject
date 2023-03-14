@@ -188,7 +188,9 @@ server <- function(input, output) {
   sn_reactive<- reactive({
     iucn_info %>% 
       filter(scientific_name_lower %in% input$pick_species1) %>% 
-      select(scientific_name_cap)
+      select(scientific_name_cap) %>% 
+      toString() %>% 
+      str_trim()
   })
   
   #reactive to remove _ from stressor for text output
@@ -213,10 +215,10 @@ server <- function(input, output) {
   #output that creates text with species info
   #replaced input$pick_species1 with reactive function
   output$species_info_text<-renderText({
-    paste(sn_reactive(),", also known as", cm_reactive(), ", has an IUCN status of", 
-          iucn_reactive(), ". Of the stressors tested,", sn_reactive(), " is most vulnerable to", 
-          most_impacted_stressor_reactive(), ". This means that if the species was exposed to the same intensity of 
-          all stressors tested, then", most_impacted_stressor_reactive() , "will have the greatest impact.")
+    paste(sn_reactive(),", also known as ", cm_reactive(), ", has an IUCN status of ",
+          iucn_reactive(),". Of the stressors tested, ", sn_reactive(), " is most vulnerable to",
+          most_impacted_stressor_reactive(), ". This means that if the species was exposed to the same intensity of
+          all stressors tested, then ", most_impacted_stressor_reactive() , " will have the greatest impact.", sep="")
   })
   
   #output that creates text with stressor info
