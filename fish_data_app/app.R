@@ -55,7 +55,7 @@ ui <- fluidPage(
                                                 selected="biomass_removal")
                                         ),
                         
-                        mainPanel (textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"), imageOutput("image"))
+                        mainPanel (textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"), imageOutput("image"), textOutput("citation"))
                 #
                       )
                     ),
@@ -213,7 +213,7 @@ server <- function(input, output) {
   
   #output with basic info about data that doesn't change
   output$info<-renderText({
-    paste("This dataset was collected by Casey O'Hara. It examines the risk of impact 
+    paste("This dataset examines the risk of impact 
           of different environmental stressors on different marine species by intersecting 
           spatial distributions according to each species' vulnerability to a given stressor.
           This analysis specifically explore the vulnerability of high commercial value
@@ -258,6 +258,12 @@ server <- function(input, output) {
          width = "60%",
          height = 350)
   }, deleteFile = F)
+  
+  output$citation<-renderText({
+    paste("Data collected fom: O’Hara, C., Frazier, M., Valle, M., Butt, N., Kaschner, K., Klein, C.,
+          & Halpern, B. *Cumulative human impacts on global marine fauna highlight risk to
+          fragile functional diversity of marine ecosystems* [Unpublished manuscript")
+  })
 
 #plotting panel  
   #output that makes a reactive plot title
