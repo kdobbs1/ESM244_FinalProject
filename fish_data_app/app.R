@@ -54,7 +54,7 @@ ui <- fluidPage(
                                                 selected="biomass_removal")
                                         ),
                         
-                        mainPanel (textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"), imageOutput("image"), textOutput("test"))
+                        mainPanel (textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"), imageOutput("image"))
                 #
                       )
                     ),
@@ -234,18 +234,11 @@ server <- function(input, output) {
   pic_reactive <- reactive({
     iucn_info %>% 
       filter(scientific_name_lower %in% input$pick_species1) %>% 
-    # fish_info %>% 
-    #   filter(species %in% input$pick_species1) %>% 
       select(scientific_name_lower) %>% 
-      #fish_info[1,] %>% 
       toString() %>% 
       str_replace_all(pattern = " ", replacement = "_") 
   })
   
-  #############OFFICE HOURS
-  #this line shows me that the next should work
-  #pic_file<-paste("www/","chanos_chanos",".jpg", sep="")
-  #but this does not!!!!
   pic_file<-reactive({
     paste("www/", pic_reactive(),".jpg", sep="") %>% 
     as.character()
