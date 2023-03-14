@@ -7,6 +7,7 @@ library(dplyr)
 library(knitr)
 library(DT)
 library(ggplot2)
+library(RColorBrewer)
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv")) %>% 
   filter(stressor!="air_temp") %>% 
   filter(stressor!="inorganic_pollution") %>%
@@ -25,7 +26,8 @@ stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>%
   filter(stressor!="poisons_toxins") %>%
   filter(stressor!="organic_pollution") %>%
   filter(stressor!="salinity") %>%
-  filter(stressor!="storm_disturbance")
+  filter(stressor!="storm_disturbance") %>% 
+  mutate(stressor = str_replace_all(stressor, pattern = "_", replacement = " "))
 
 ui <- fluidPage(
   tags$script(src = "https://kit.fontawesome.com/4ee2c5c2ed.js"), 
@@ -55,7 +57,7 @@ ui <- fluidPage(
                 #
                       )
                     ),
-             tabPanel("Summary Table", fluid=TRUE, tags$i(class = "fa-solid fa-user"), #icon is in the wrong location but it works?
+             tabPanel("Summary Table", fluid=TRUE, 
                       #icon=icon("", lib = "font-awesome"),
                       sidebarLayout(
                         sidebarPanel (
@@ -74,7 +76,7 @@ ui <- fluidPage(
                                             # choices = unique(region_info$realm))
                          
                            ),
-                         mainPanel("OUTPUT!", DTOutput('table'))
+                         mainPanel(textOutput("chart_title"), DTOutput('table'))
                          )
                       ),
              tabPanel("Plotting", fluid=TRUE, icon=icon("fa-solid fa-chart-column", lib = "font-awesome"), # From glyphicon library,
@@ -283,11 +285,21 @@ server <- function(input, output) {
   #output that creates plot
   output$fish_info_plot <- renderPlot(
     ggplot(data = fish_info_reactive(), aes(x = reorder(stressor, -vuln), y=vuln)) +
-      geom_col(aes(color = vuln, fill=vuln)) + theme_minimal()+
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+      geom_col(aes(fill=factor(vuln))) + theme_minimal()+
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+      scale_colour_brewer(palette = "Blues")+
+      scale_fill_brewer(palette = "Blues")+
+      xlab("Stressor")+
+      ylab("Vulnerability Score")+ 
+      guides(fill=guide_legend(title="Vulnerability Score"))
   )
   
-#summary table panel  
+#summary table panel 
+  #chart title
+  output$chart_title<-renderText({
+    paste("Stressors with the Greatest Impact on", input$pick_species2)
+  })
+  
   #data for the table
   table_data <- fish_info %>% 
     select(species, stressor, vuln)
