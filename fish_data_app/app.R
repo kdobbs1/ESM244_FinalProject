@@ -29,6 +29,7 @@ stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>%
   filter(stressor!="salinity") %>%
   filter(stressor!="storm_disturbance") %>% 
   mutate(stressor = str_replace_all(stressor, pattern = "_", replacement = " "))
+iucn_meaning<-read_csv(here("fish_data_app/data", "iucn_meaning.csv"))
 
 ui <- fluidPage(
   tags$script(src = "https://kit.fontawesome.com/4ee2c5c2ed.js"), 
@@ -180,6 +181,12 @@ server <- function(input, output) {
       select(iucn_status)
   })
   
+  iucn_meaning_reactive<-reactive({
+    iucn_meaning %>%
+      filter(iucn_status %in% iucn_reactive()) %>% 
+      select(info)
+  })
+  
   #common name reactive
   cm_reactive<- reactive({
     iucn_info %>% 
@@ -214,12 +221,12 @@ server <- function(input, output) {
           about the species and how the stressors were defined by changing the inputs 
           in the panel on the left.")
   })
-  
+
   #output that creates text with species info
   #replaced input$pick_species1 with reactive function
   output$species_info_text<-renderText({
     paste(sn_reactive(),", also known as ", cm_reactive(), ", has an IUCN status of ",
-          iucn_reactive(),". Of the stressors tested, ", sn_reactive(), " is most vulnerable to",
+          iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", sn_reactive(), " is most vulnerable to",
           most_impacted_stressor_reactive(), ". This means that if the species was exposed to the same intensity of
           all stressors tested, then ", most_impacted_stressor_reactive() , " will have the greatest impact.", sep="")
   })
