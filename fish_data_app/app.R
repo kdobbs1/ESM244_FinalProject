@@ -282,7 +282,7 @@ server <- function(input, output) {
 
   #output that creates plot
   output$fish_info_plot <- renderPlot(
-    ggplot(data = fish_info_reactive(), aes(x = stressor, y=vuln)) +
+    ggplot(data = fish_info_reactive(), aes(x = reorder(stressor, -vuln), y=vuln)) +
       geom_col(aes(color = vuln, fill=vuln)) + theme_minimal()+
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
   )
@@ -292,17 +292,22 @@ server <- function(input, output) {
   table_data <- fish_info %>% 
     select(species, stressor, vuln)
   
+  table_data_1<- fish_info %>% 
+    select(stressor, vuln)
+  
   #reactive function for the table inputs
   table_reactive <- reactive({
     table_data %>% 
       filter(species %in% input$pick_species2) %>% 
-      arrange(desc(vuln))
+      arrange(desc(vuln)) %>% 
+      select(stressor, vuln)
   })
 
   #output that creates the table
   output$table = renderDT({
     datatable(table_reactive()) %>% 
-      DT::formatStyle(columns = names(table_data), color="lightgray") #column headers, show all rows at once
+      #DT::formatStyle(columns = names(table_data), color="lightgray") #column headers, show all rows at once
+      DT::formatStyle(columns = names(table_data_1), color="lightgray") #column headers, show all rows at once
   }) 
 
   # Casey: We're writing the code to generate the map outside of the app to begin with, in "plot_testing.Rmd". We'll add it in once it's complete and behaving as expected.
