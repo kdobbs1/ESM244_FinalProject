@@ -248,16 +248,10 @@ server <- function(input, output) {
   output$image<- renderImage({
     list(src = pic_file(),
          #src = "www/brevoortia_patronus.jpg", #how I know this should work
-         width = "100%",
-         height = 330)
+         width = "80%",
+         height = 425, 
+         align = "center")
   }, deleteFile = F)
-    
-    
-  #   renderPlot({
-  #   ggdraw ()+
-  #     draw_image(here("fish_data_app/data/pics", "brevoortia_patronus.jpg"))
-  #     #draw_image("path to my image")
-  # })
 
 #plotting panel  
   #output that makes a reactive plot title
@@ -308,7 +302,6 @@ server <- function(input, output) {
   #output that creates the table
   output$table = renderDT({
     datatable(table_reactive()) %>% 
-      #DT::formatStyle(columns = names(table_data), color="lightgray") #column headers, show all rows at once
       DT::formatStyle(columns = names(table_data_1), color="lightgray") #column headers, show all rows at once
   }) 
 
