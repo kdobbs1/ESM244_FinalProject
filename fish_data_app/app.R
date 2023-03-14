@@ -39,7 +39,7 @@ ui <- fluidPage(
   theme=shinytheme("slate"),
  # theme = "ocean.css",
   navbarPage("Relative Impacts of Stressors on Commercially Viable Fish",
-             tabPanel("Info", fluid=TRUE, icon=icon("globe-americas"),
+             tabPanel("Info", fluid=TRUE, icon=icon("fish"),
                       sidebarLayout(
                         sidebarPanel(
                           titlePanel("Learn more about the data here:"),
@@ -59,7 +59,7 @@ ui <- fluidPage(
                 #
                       )
                     ),
-             tabPanel("Summary Table", fluid=TRUE, 
+             tabPanel("Summary Table", fluid=TRUE, icon = icon("table"),
                       #icon=icon("", lib = "font-awesome"),
                       sidebarLayout(
                         sidebarPanel (
@@ -81,7 +81,7 @@ ui <- fluidPage(
                          mainPanel(textOutput("chart_title"), DTOutput('table'))
                          )
                       ),
-             tabPanel("Plotting", fluid=TRUE, icon=icon("fa-solid fa-chart-column", lib = "font-awesome"), # From glyphicon library,
+             tabPanel("Plotting", fluid=TRUE, icon = icon("chart-column"), 
                       sidebarLayout(
                         sidebarPanel(selectInput(inputId = "pick_species3",
                                                   label = "Choose species:",
@@ -255,9 +255,8 @@ server <- function(input, output) {
   output$image<- renderImage({
     list(src = pic_file(),
          #src = "www/brevoortia_patronus.jpg", #how I know this should work
-         width = "80%",
-         height = 425, 
-         align = "center")
+         width = "60%",
+         height = 350)
   }, deleteFile = F)
 
 #plotting panel  
