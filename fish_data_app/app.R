@@ -221,7 +221,7 @@ server <- function(input, output) {
   
   #output that creates text with stressor info
   output$selected_var1<-renderText({
-    paste(stressor_clean_reactive(), " is calculated according to the following:", stressor_info_reactive())
+    paste("In this dataset,", stressor_clean_reactive(), " is calculated according to the following:", stressor_info_reactive())
     })
   
   #reactive to produce file path of images
