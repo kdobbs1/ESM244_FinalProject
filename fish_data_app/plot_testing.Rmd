@@ -244,12 +244,10 @@ It might be best to make a series of raster files to reflect the color options w
 
 First attempt with ggplot (can later maybe attempt with tmap)
 ```{r}
-# species_stress_df_var <- 'stress'
 species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>%
-  rename('species_stress' = 'uv_radiation_2020')
-#   rename(!!species_stress_df_var := stressor_tif_name)                # NEED TO GET THIS GENERAL FUNCTION WORKING
+  rename_with(.cols = 3, ~ 'species_stress')
 stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
-  rename('stress' = 'uv_radiation_2020')
+  rename_with(.cols = 3, ~ 'stress')
 
 species_stress_map <- ggplot() +
   geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +

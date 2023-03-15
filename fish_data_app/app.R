@@ -8,6 +8,19 @@ library(knitr)
 library(DT)
 library(ggplot2)
 library(RColorBrewer)
+
+
+################# Setting paths
+
+data_path <- 'fish_data_app/data'
+
+source(here(data_path, 'helper_fxns.R'))
+
+
+################# Front End Data Processing
+
+##### fish info
+
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv")) %>% 
   filter(stressor!="air_temp") %>% 
   filter(stressor!="inorganic_pollution") %>%
@@ -30,6 +43,68 @@ stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>%
   filter(stressor!="storm_disturbance") %>% 
   mutate(stressor = str_replace_all(stressor, pattern = "_", replacement = " "))
 iucn_meaning<-read_csv(here("fish_data_app/data", "iucn_meaning.csv"))
+
+##### For map
+
+am_species <- c('chanos chanos', 
+                'gadus morhua', 
+                'mallotus villosus',
+                'oncorhynchus mykiss',
+                'salmo salar',
+                'trichiurus lepturus')
+
+iucn_species <- c('brevoortia patronus',
+                  'clupea harengus',
+                  'engraulis japonicus',
+                  'engraulis ringens',
+                  'katsuwonus pelamis',
+                  'sardina pilchardus',
+                  'sardinella longiceps',
+                  'scomber japonicus',
+                  'scomber scombrus',
+                  'thunnus albacares')
+
+iucn_species_dict <- c('brevoortia patronus' = '191208',
+                       'clupea harengus' = '155123',
+                       'engraulis japonicus' = '170306',
+                       'engraulis ringens' = '183775',
+                       'katsuwonus pelamis' = '170310',
+                       'sardina pilchardus' = '198580',
+                       'sardinella longiceps' = '154989',
+                       'scomber japonicus' = '98969433',
+                       'scomber scombrus' = '170354',
+                       'thunnus albacares' = '21857')
+
+# make dictionary with all stressor and file names
+stressor_tif_dict <- c("air_temp" = "",   
+                       "biomass_removal" = "",
+                       "bycatch" = "bycatch_benthic_2017",  # there are two bycatch files with different suffixes?
+                       "entanglement_macroplastic" = "",
+                       "eutrophication_nutrient_pollution" = "nutrient_2020",
+                       "habitat_loss_degradation" = "",
+                       "inorganic_pollution" = "",
+                       "light_pollution" = "light_2018",
+                       "marine_heat_waves" = "sst_extremes_2020",             # is this where sst_extreme should go?
+                       "noise_pollution" = "",
+                       "ocean_acidification" = "ocean_acidification_2020",
+                       "oceanographic" = "",
+                       "organic_pollution" = "",
+                       "plastic_pollution_microplastic" = "microplastics_2015",
+                       "poisons_toxins" = "",
+                       "salinity" = "",
+                       "sedimentation" = "",
+                       "sst_rise" = "spp_max_temp",     # this is located in a different location than the others, and is only part of the file name
+                       "storm_disturbance" = "",
+                       "uv_radiation" = "uv_radiation_2020",
+                       "wildlife_strike" = ""
+)
+
+##### Make region limits
+
+
+
+
+################## User Interface
 
 ui <- fluidPage(
   tags$script(src = "https://kit.fontawesome.com/4ee2c5c2ed.js"), 
@@ -121,13 +196,13 @@ ui <- fluidPage(
                                         selectInput(inputId = "pick_stressor4",
                                                     label = "Choose stressor:",
                                                     choices = unique(fish_info$stressor)),
-                                        checkboxGroupInput(inputId = "pick_species4",       #need unique inputIds per widget
+                                        selectInput(inputId = "pick_species4",       #need unique inputIds per widget
                                                            label = "Choose Species:",
                                                            choices = unique(fish_info$species)),
                                         
                         ),
                         
-                        mainPanel ("OUTPUT" )
+                        mainPanel (textOutput("OUTPUT"), plotOutput('species_stress_map'))
                         
                         
                       )
@@ -138,7 +213,7 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   
-#info panel
+##################### info panel ########################
   #reactive fxn for stressor info text
   stressor_info_reactive <- reactive({
     stressor_info %>% 
@@ -298,7 +373,7 @@ server <- function(input, output) {
           fragile functional diversity of marine ecosystems* [Unpublished manuscript]")
   })
 
-#plotting panel  
+##################### plotting panel ####################### 
   #output that makes a reactive plot title
   output$plot_title<-renderText({
     paste("Impact of Stressors on", input$pick_species3)
@@ -323,7 +398,7 @@ server <- function(input, output) {
       guides(fill=guide_legend(title="Vulnerability Score"))
   )
   
-#summary table panel 
+####################### summary table panel #####################
   #chart title
   output$chart_title<-renderText({
     paste("Stressors with the Greatest Impact on", input$pick_species2)
@@ -350,7 +425,136 @@ server <- function(input, output) {
       DT::formatStyle(columns = names(table_data_1), color="lightgray") #column headers, show all rows at once
   }) 
 
-  # Casey: We're writing the code to generate the map outside of the app to begin with, in "plot_testing.Rmd". We'll add it in once it's complete and behaving as expected.
+  ######################### map panel #########################
+  map_stress_reactive <- reactive({
+    input$pick_stressor4
+  })
+  map_species_reactive <- reactive({
+    input$pick_stressor4
+  })
+  
+  
+  ####### Process data for map #######
+  
+  output$species_stress_map = renderPlot({
+
+    stressor_choice <- c(map_stress_reactive())
+    species_choice <- map_species_reactive()
+    
+    # format inputs for feeding to file chains
+    species_choice_formatted <- sub(' ', '_', tolower(species_choice))
+    species_name_file <- species_choice_formatted
+    
+    # set source depending on species
+    src <- ''
+    if (species_choice %in% am_species) {
+      src <- 'am'
+    }
+    if (species_choice %in% iucn_species) {
+      src <- 'iucn'
+      species_name_file <- iucn_species_dict[species_choice]
+    }
+    
+    
+    ##### format STRESSOR file names for calls according to choice
+    
+    # initialize path and name variables
+    stressor_tif_name <- ''
+    stressor_tif_path_addition <- ''
+    stressor_tif_path <- ''
+    
+    # add to path and name for sea surface temperature maps
+    if (stressor_choice == "sst_rise") {
+      
+      sst_tif_prefix <- '_spp_max_temp_'
+      stressor_tif_path_addition <- 'sst_rise_maps'
+      
+      stressor_tif_name <- paste(src, sst_tif_prefix, species_name_file, sep = '')
+      stressor_tif_path_addition <- 'sst_rise_maps'
+      
+    } else {                                    # for all other files, refer to the dictionary
+      stressor_tif_name <- stressor_tif_dict[stressor_choice]
+      stressor_tif_path_addition <- 'stressor_maps'
+    }
+    
+    stressor_tif_folder <- paste(data_path, '/', stressor_tif_path_addition, sep = '')
+    stressor_tif_path <- paste(stressor_tif_folder, '/', stressor_tif_name, '.tif', sep = '')
+    
+    
+    ##### Format SPECIES range file name for calls
+    
+    species_range_file <- paste(src, '_spp_mol_', species_name_file, sep = '')
+    species_range_csv_path <- paste(data_path, '/species_ranges/', species_range_file, '.csv', sep = '')
+    species_range_df = read_csv(here(species_range_csv_path))
+    
+    # csv processing depends on the data source
+    if (src == 'iucn') {
+      species_which <- 'presence'
+    } else {          # for src == 'am'
+      species_range_df <- species_range_df %>% 
+        filter(prob >= 0.5) %>% 
+        drop_na()
+      species_which <- 'prob'
+    }
+    
+    
+    ##### Capture species vulernability to the chosen stressor
+    
+    species_vuln <- fish_info %>% 
+      filter(species == species_choice, stressor == stressor_choice) %>% 
+      pull(vuln)
+    
+    ##### Generate rasters for stressor and species range
+    # Also change the CRS
+    crs_proj <- 'epsg:4326'
+    stressor_rast <- rast(here(stressor_tif_path)) %>% 
+      project(crs_proj)
+    
+    # call helper function to make raster from csv
+    species_rast <- map_to_mol(species_range_df,
+                               by = 'cell_id',
+                               which = species_which,
+                               ocean_mask = TRUE) %>% 
+      project(crs_proj)  
+    
+    # Make separate rasters that are mutually exclusive; for species stress and stressor
+    stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the stressor map to where the species range is
+    product_rast <- stressor_intersect * species_rast                   # calculate species stress
+    inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)
+    
+    ######### Actually make the plot ##########
+    
+    species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>%
+      rename_with(.cols = 3, ~ 'species_stress')
+    stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
+      rename_with(.cols = 3, ~ 'stress')
+    
+    species_stress_map <- ggplot() +
+      geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
+      scale_fill_gradient(low = 'orange1', high = 'red4') +
+      new_scale_fill() +
+      geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+      scale_fill_gradient(low = 'cyan1', high = 'blue4') +
+      theme_void()
+    
+    species_stress_map
+  })
+  
+  
+  
+  
+  
+  ### Extract stressor and species specific rasters
+  
+      # make map of stressor that excludes species stress
+  
+  
+  
+  
+  
+  
+  
+  
 }
 
 shinyApp(ui = ui, server = server)
