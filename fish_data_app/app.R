@@ -146,17 +146,17 @@ server <- function(input, output) {
       select(exp)
   })
 
-  #reactive fxn for highest vuln score for a species
-  most_impacted_stressor_reactive <- reactive({
-    fish_info %>%
-      filter(species %in% input$pick_species1) %>%
-      select(stressor,vuln) %>%
-      arrange(desc(vuln)) %>%
-      slice(1) %>%
-      select(stressor) %>%
-      mutate(stressor = str_replace(stressor, pattern = "_", replacement = " "))
-      #what to do when there is a tie????????????
-  })
+  # #reactive fxn for highest vuln score for a species
+  # most_impacted_stressor_reactive <- reactive({
+  #   fish_info %>%
+  #     filter(species %in% input$pick_species1) %>%
+  #     select(stressor,vuln) %>%
+  #     arrange(desc(vuln)) %>%
+  #     slice(1) %>%
+  #     select(stressor) %>%
+  #     mutate(stressor = str_replace(stressor, pattern = "_", replacement = " "))
+  #     #what to do when there is a tie????????????
+  # })
 
   ###OFFICE HOURS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   #trying to make an expression that will slice whichever vulnerability scores are highest
@@ -173,6 +173,20 @@ server <- function(input, output) {
   #     mutate(stressor = str_replace(stressor, pattern = "_", replacement = " "))
   #   #what to do when there is a tie????????????
   # })
+  
+  ### Seth's attempt
+  most_impacted_stressor_reactive <- reactive({
+    fish_info %>%
+      filter(species %in% input$pick_species1) %>%
+      select(stressor,vuln) %>%
+      arrange(desc(vuln)) %>% 
+      filter(vuln == max(vuln)) %>% 
+      select(stressor) %>% 
+      mutate(stressor = str_replace(stressor, pattern = "_", replacement = " ")) %>% 
+      as.list()
+  })
+      
+
   
   #reactive fxn for IUCN status
   iucn_reactive<- reactive({
@@ -222,13 +236,30 @@ server <- function(input, output) {
           in the panel on the left.")
   })
 
-  #output that creates text with species info
-  #replaced input$pick_species1 with reactive function
+  # #output that creates text with species info
+  # #replaced input$pick_species1 with reactive function
+  # output$species_info_text<-renderText({
+  #   paste(sn_reactive(),", also known as ", cm_reactive(), ", has an IUCN status of ",
+  #         iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", sn_reactive(), " is most vulnerable to",
+  #         most_impacted_stressor_reactive(), ". This means that if the species was exposed to the same intensity of
+  #         all stressors tested, then ", most_impacted_stressor_reactive() , " will have the greatest impact.", sep="")
+  # })
+  
+  ### Seth's attempt for multiple top stressors
   output$species_info_text<-renderText({
-    paste(sn_reactive(),", also known as ", cm_reactive(), ", has an IUCN status of ",
-          iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", sn_reactive(), " is most vulnerable to",
-          most_impacted_stressor_reactive(), ". This means that if the species was exposed to the same intensity of
-          all stressors tested, then ", most_impacted_stressor_reactive() , " will have the greatest impact.", sep="")
+    most_impacted_stressor_list <- most_impacted_stressor_reactive()
+    if (length(most_impacted_stressor_list$stressor) == 1) {
+      paste(sn_reactive(),", also known as ", cm_reactive(), ", has an IUCN status of ",
+          iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", sn_reactive(), " is most vulnerable to ",
+          most_impacted_stressor_list$stressor[1], ". This means that if the species was exposed to the same intensity of
+          all stressors tested, then ", most_impacted_stressor_list$stressor[1], " will have the greatest impact.", sep="")
+    }
+    if (length(most_impacted_stressor_list$stressor) == 2) {
+      paste(sn_reactive(),", also known as ", cm_reactive(), ", has an IUCN status of ",
+            iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", sn_reactive(), " is most vulnerable to ",
+            most_impacted_stressor_list$stressor[1], " and ", most_impacted_stressor_list$stressor[2], ". This means that if the species was exposed to the same intensity of
+          all stressors tested, then ", most_impacted_stressor_list$stressor[1], " and ", most_impacted_stressor_list$stressor[2], " will have the greatest impact.", sep="")
+    }
   })
   
   #output that creates text with stressor info
@@ -256,7 +287,9 @@ server <- function(input, output) {
     list(src = pic_file(),
          #src = "www/brevoortia_patronus.jpg", #how I know this should work
          width = "60%",
-         height = 350)
+         height = 350,
+         style="display: block; margin-left: auto; margin-right: auto;"
+         )
   }, deleteFile = F)
   
   output$citation<-renderText({
