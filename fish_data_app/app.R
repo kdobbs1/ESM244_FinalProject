@@ -287,7 +287,9 @@ server <- function(input, output) {
     list(src = pic_file(),
          #src = "www/brevoortia_patronus.jpg", #how I know this should work
          width = "60%",
-         height = 350)
+         height = 350,
+         style="display: block; margin-left: auto; margin-right: auto;"
+         )
   }, deleteFile = F)
   
   output$citation<-renderText({
