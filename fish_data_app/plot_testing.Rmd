@@ -41,24 +41,6 @@ rgns_geog_raster <- raster(here(data_path, 'spatial', 'meow_rgns_mol.tif'))
 ```
 
 
-```{r}
-species_choice <- 'thunnus albacares'
-
-top_stress <- fish_info %>%
-      filter(species %in% species_choice) %>%
-      select(stressor,vuln) %>%
-      arrange(desc(vuln)) %>% 
-      filter(vuln == max(vuln)) %>% 
-      select(stressor) %>% 
-      mutate(stressor = str_replace(stressor, pattern = "_", replacement = " ")) %>% 
-      as.list()
-
-
-lengths(top_stress) == 2
-
-```
-
-
 
 
 # Make map of environmental stressors and species range
