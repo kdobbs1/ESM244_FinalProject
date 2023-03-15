@@ -14,6 +14,9 @@ library(terra)
 # library(tidyterra)        # for mapping terra rasters
 library(sf)
 library(tmap)
+library(mapproj)
+library(maptools)
+library(ggnewscale)
 library(here)
 ```
 
@@ -35,20 +38,7 @@ fish_info <- read_csv(here(data_path, 'fish_info.csv'))
 rgns_geog <- read_csv(here(data_path, 'spatial', 'meow_rgns.csv'))
 rgn_names_ohi <- read_csv(here(data_path, 'spatial', 'rgn_names_ohi.csv'))
 rgns_geog_raster <- raster(here(data_path, 'spatial', 'meow_rgns_mol.tif'))
-rgns_geog_raster
-plot(rgns_geog_raster)
 ```
-
-```{r}
-eez_raster <- raster(here(data_path, 'spatial', 'eez_mol.tif'))
-eez_raster
-plot(eez_raster)
-
-ocean_area_raster <- raster(here(data_path, 'spatial', 'ocean_area_mol.tif'))
-ocean_area_raster
-plot(ocean_area_raster)
-```
-
 
 
 
@@ -139,6 +129,7 @@ stressor_tif_dict <- c("air_temp" = "",
 
 ```
 
+### Make region limits
 
 ### Extract stressor and species specific rasters
 
@@ -204,7 +195,8 @@ if (src == 'iucn') {
   species_which <- 'presence'
 } else {          # for src == 'am'
   species_range_df <- species_range_df %>% 
-    filter(prob >= 0.5)
+    filter(prob >= 0.5) %>% 
+    drop_na()
   species_which <- 'prob'
 }
 
@@ -219,23 +211,27 @@ species_vuln <- fish_info %>%
 
 
 ##### Generate rasters for stressor and species range
+# Also change the CRS
+crs_proj <- 'epsg:4326'
 
-stressor_rast <- rast(here(stressor_tif_path))
+stressor_rast <- rast(here(stressor_tif_path)) %>% 
+  project(crs_proj)
+
+
+
 # call helper function to make raster from csv
-# species_rast <- map_to_mol(species_range_df,
-#                            by = 'cell_id',
-#                            which = species_which,
-#                            xfm == NULL,
-#                            ocean_mask = TRUE)
+species_rast <- map_to_mol(species_range_df,
+                           by = 'cell_id',
+                           which = species_which,
+                           ocean_mask = TRUE) %>% 
+  project(crs_proj)  
 
 
-stressor_intersect <- terra::mask(stressor_rast, species_rast)
-product_rast <- stressor_intersect * species_rast
+# Make separate rasters that are mutually exclusive; for species stress and stressor
+stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the stressor map to where the species range is
+product_rast <- stressor_intersect * species_rast                   # calculate species stress
+inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)    # make map of stressor that excludes species stress
 
-plot(stressor_rast)
-
-plot(stressor_intersect)
-plot(product_rast)
 
 ```
 
@@ -248,23 +244,158 @@ It might be best to make a series of raster files to reflect the color options w
 
 First attempt with ggplot (can later maybe attempt with tmap)
 ```{r}
-species_stress_df_var <- 'stress'
-species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>% 
-#   rename(!!species_stress_df_var := stressor_tif_name)
-stressor_df <- as.data.frame(x = stressor_rast, xy = TRUE)
+# species_stress_df_var <- 'stress'
+species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>%
+  rename('species_stress' = 'uv_radiation_2020')
+#   rename(!!species_stress_df_var := stressor_tif_name)                # NEED TO GET THIS GENERAL FUNCTION WORKING
+stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
+  rename('stress' = 'uv_radiation_2020')
+
+species_stress_map <- ggplot() +
+  geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
+  # scale_color_viridis_c() +
+  scale_fill_gradient(low = 'orange1', high = 'red4') +
+  new_scale_fill() +
+  geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+  scale_fill_gradient(low = 'cyan1', high = 'blue4') +
+  #scale_color_distiller('stress', palette = "Spectral") +
+  # coord_sf(expand = 0) +
+  # coord_cartesian(xlim = c(-13000000, -8000000), ylim = c(0, 10000000)) +
+  theme_void()
+
+species_stress_map
+
+```
+
+### Recentering the map to the data
+Adapted from: https://stackoverflow.com/questions/10620862/use-different-center-than-the-prime-meridian-in-plotting-a-world-map/10629246#10629246
+```{r}
+library(sp)
+library(maps)
+library(maptools)   ## map2SpatialLines(), pruneMap()
+library(rgdal)      ## CRS(), spTransform()
+library(rgeos)      ## readWKT(), gIntersects(), gBuffer(), gDifference() 
+
+## Convert a "maps" map to a "SpatialLines" map
+makeSLmap <- function() {
+    llCRS <- CRS("+proj=longlat +ellps=WGS84")
+    wrld <- map("world", interior = FALSE, plot=FALSE,
+            xlim = c(-179, 179), ylim = c(-89, 89))
+    wrld_p <- pruneMap(wrld, xlim = c(-179, 179))
+    map2SpatialLines(wrld_p, proj4string = llCRS)
+}
+
+## Clip SpatialLines neatly along the antipodal meridian
+sliceAtAntipodes <- function(SLmap, lon_0) {
+    ## Preliminaries
+    long_180 <- (lon_0 %% 360) - 180
+    llCRS  <- CRS("+proj=longlat +ellps=WGS84")  ## CRS of 'maps' objects
+    eqcCRS <- CRS("+proj=eqc")
+    ## Reproject the map into Equidistant Cylindrical/Plate Caree projection 
+    SLmap <- spTransform(SLmap, eqcCRS)
+    ## Make a narrow SpatialPolygon along the meridian opposite lon_0
+    L  <- Lines(Line(cbind(long_180, c(-89, 89))), ID="cutter")
+    SL <- SpatialLines(list(L), proj4string = llCRS)
+    SP <- gBuffer(spTransform(SL, eqcCRS), 10, byid = TRUE)
+    ## Use it to clip any SpatialLines segments that it crosses
+    ii <- which(gIntersects(SLmap, SP, byid=TRUE))
+    # Replace offending lines with split versions
+    # (but skip when there are no intersections (as, e.g., when lon_0 = 0))
+    if(length(ii)) { 
+        SPii <- gDifference(SLmap[ii], SP, byid=TRUE)
+        SLmap <- rbind(SLmap[-ii], SPii)  
+    }
+    return(SLmap)
+}
+
+## re-center, and clean up remaining streaks
+recenterAndClean <- function(SLmap, lon_0) {
+    llCRS <- CRS("+proj=longlat +ellps=WGS84")  ## map package's CRS
+    newCRS <- CRS(paste("+proj=eqc +lon_0=", lon_0, sep=""))
+    ## Recenter 
+    SLmap <- spTransform(SLmap, newCRS)
+    ## identify remaining 'scratch-lines' by searching for lines that
+    ## cross 2 of 3 lines of longitude, spaced 120 degrees apart
+    v1 <-spTransform(readWKT("LINESTRING(-62 -89, -62 89)", p4s=llCRS), newCRS)
+    v2 <-spTransform(readWKT("LINESTRING(58 -89, 58 89)",   p4s=llCRS), newCRS)
+    v3 <-spTransform(readWKT("LINESTRING(178 -89, 178 89)", p4s=llCRS), newCRS)
+    ii <- which((gIntersects(v1, SLmap, byid=TRUE) +
+                 gIntersects(v2, SLmap, byid=TRUE) +
+                 gIntersects(v3, SLmap, byid=TRUE)) >= 2)
+    SLmap[-ii]
+}
+
+## Put it all together:
+Recenter <- function(lon_0 = -100, grid=FALSE, ...) {                        
+    SLmap <- makeSLmap()
+    SLmap2 <- sliceAtAntipodes(SLmap, lon_0)
+    recenterAndClean(SLmap2, lon_0)
+}
+
+## Try it out
+par(mfrow=c(2,2), mar=rep(1, 4))
+plot(Recenter(-90), col="grey40"); box() ## Centered on 90w 
+plot(Recenter(0),   col="grey40"); box() ## Centered on prime meridian
+plot(Recenter(90),  col="grey40"); box() ## Centered on 90e
+plot(Recenter(180), col="grey40"); box() ## Centered on International Date Line
+```
 
 
-#species_stress_map <- ggplot() + geom_spatraster(data = stressor_rast) + geom_spatraster(data = product_rast) + theme_minimal()
 
-species_stress_map <- ggplot(data = stressor_df, aes(x = x, y = y, fill = stressor_choice)) + 
-  geom_raster() + 
-  geom_raster(data = species_stress_df, fill = ')
+
+
+
+
+```{r}
+# Attempting to use sf instead of geom_raster
+
+# species_stress_poly <- terra::as.polygons(product_rast) %>% 
+#   st_as_sf()
+# 
+# stress_poly <- terra::as.polygons(product_rast) %>% 
+#   st_as_sf()
+# 
+# species_stress_map <- ggplot() + 
+#   geom_sf(data = species_stress_poly, fill = 'grey30', color = 'black') +
+#   # scale_color_viridis_c() +
+#   scale_fill_gradient(low = 'orange1', high = 'red4') +
+#   new_scale_fill() +
+#   geom_raster(data = stressor_df, aes(x = x, y = y, fill = stress)) + 
+#   scale_fill_gradient(low = 'cyan1', high = 'blue4') +
+#   #scale_color_distiller('stress', palette = "Spectral") +
+#   coord_sf(expand = 0) +
+#   theme_void()
+# 
+# species_stress_map
+```
+
+```{r}
+# Attempting to make stressor map with species range polygons overlayed
+# need a way of making fill opaque
+
+stressor_df <- as.data.frame(x = stressor_rast, xy = TRUE) %>%
+  rename('stress' = 'uv_radiation_2020')
+
+species_poly <- terra::as.polygons(species_rast) %>%
+  st_as_sf()
+
+species_stress_map <- ggplot() +
+  geom_raster(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+  scale_fill_gradient(low = 'cyan1', high = 'blue4') +
+  #scale_color_distiller('stress', palette = "Spectral") +
+  new_scale_fill() +
+  geom_sf(data = species_stress_poly, color = 'black') +
+  # scale_color_viridis_c() +
   coord_sf(expand = 0) +
-  theme_void() + 
+  theme_void()
 
 species_stress_map
 ```
 
+
+Because of overlap, we may only be able to show 1 stressor and 1 species; unless species dont overlap
+
+Another idea: Make two versions of stressor where one is the intersect with species range and one is the opposite, then just do the OUTLINE of the species ranges. This way, only the region where stressor and species overlap require a different color
 
 
 

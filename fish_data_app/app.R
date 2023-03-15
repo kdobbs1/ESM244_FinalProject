@@ -6,20 +6,43 @@ library(fontawesome)
 library(dplyr)
 library(knitr)
 library(DT)
-fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv"))
+library(ggplot2)
+library(RColorBrewer)
+fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv")) %>% 
+  filter(stressor!="air_temp") %>% 
+  filter(stressor!="inorganic_pollution") %>%
+  filter(stressor!="oceanographic") %>%
+  filter(stressor!="poisons_toxins") %>%
+  filter(stressor!="organic_pollution") %>%
+  filter(stressor!="salinity") %>%
+  filter(stressor!="storm_disturbance")%>% 
+  mutate(stressor = str_replace_all(stressor, pattern = "_", replacement = " "))
 region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
-iucn_info<-read_csv(here("fish_data_app/data", "IUCN_data.csv"))
-stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv"))
-
+iucn_info<-read_csv(here("fish_data_app/data", "IUCN_data.csv")) %>% 
+  janitor::clean_names()
+stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>% 
+  filter(stressor!="air_temp") %>% 
+  filter(stressor!="inorganic_pollution") %>%
+  filter(stressor!="oceanographic") %>%
+  filter(stressor!="poisons_toxins") %>%
+  filter(stressor!="organic_pollution") %>%
+  filter(stressor!="salinity") %>%
+  filter(stressor!="storm_disturbance") %>% 
+  mutate(stressor = str_replace_all(stressor, pattern = "_", replacement = " "))
+iucn_meaning<-read_csv(here("fish_data_app/data", "iucn_meaning.csv"))
 
 ui <- fluidPage(
   tags$script(src = "https://kit.fontawesome.com/4ee2c5c2ed.js"), 
+  # tags$head(
+  #   tags$link(rel = "stylesheet", type = "text/css", href = "fish.css")
+  # ),
   theme=shinytheme("slate"),
-  navbarPage("Fun Fish Data World",
-             tabPanel("Info", fluid=TRUE, icon=icon("globe-americas"),
+ # theme = "ocean.css",
+  navbarPage("Relative Impacts of Stressors on Commercially Viable Fish",
+             tabPanel("Info", fluid=TRUE, icon=icon("fish"),
                       sidebarLayout(
                         sidebarPanel(
-                          titlePanel("Title Here"),
+                          titlePanel("Learn more about the data here:"),
                           #Select species
                           selectInput(inputId = "pick_species1",
                                                 label = "Choose species:",
@@ -28,14 +51,15 @@ ui <- fluidPage(
                           #Select stressor
                           selectInput(inputId = "pick_stressor1",
                                                 label = "Choose stressor:",
-                                                choices = unique(fish_info$stressor), 
-                                                selected="sst_rise")
+                                                choices = unique(stressor_info$stressor), 
+                                                selected="biomass_removal")
                                         ),
                         
-                        mainPanel ("Learn more about our data here:", textOutput("selected_var"), textOutput("selected_var1"))
+                        mainPanel (textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"), imageOutput("image"), textOutput("citation"))
+                #
                       )
                     ),
-             tabPanel("Summary Table", fluid=TRUE, tags$i(class = "fa-solid fa-user"), #icon is in the wrong location but it works?
+             tabPanel("Summary Table", fluid=TRUE, icon = icon("table"),
                       #icon=icon("", lib = "font-awesome"),
                       sidebarLayout(
                         sidebarPanel (
@@ -54,10 +78,10 @@ ui <- fluidPage(
                                             # choices = unique(region_info$realm))
                          
                            ),
-                         mainPanel("OUTPUT!", DTOutput('table'))
+                         mainPanel(textOutput("chart_title"), DTOutput('table'))
                          )
                       ),
-             tabPanel("Plotting", fluid=TRUE, icon=icon("fa-solid fa-chart-column", lib = "font-awesome"), # From glyphicon library,
+             tabPanel("Plotting", fluid=TRUE, icon = icon("chart-column"), 
                       sidebarLayout(
                         sidebarPanel(selectInput(inputId = "pick_species3",
                                                   label = "Choose species:",
@@ -114,29 +138,134 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   
+#info panel
   #reactive fxn for stressor info text
   stressor_info_reactive <- reactive({
     stressor_info %>% 
-      filter(stressor %in% input$pick_stressor1) 
+      filter(stressor %in% input$pick_stressor1) %>% 
+      select(exp)
   })
 
   #reactive fxn for highest vuln score for a species
-  most_impacted_stressor_reactive<- reactive({
-    fish_info %>% 
-      filter(species %in% input$pick_species1) %>% 
-      filter(max(vuln))
+  most_impacted_stressor_reactive <- reactive({
+    fish_info %>%
+      filter(species %in% input$pick_species1) %>%
+      select(stressor,vuln) %>%
+      arrange(desc(vuln)) %>%
+      slice(1) %>%
+      select(stressor) %>%
+      mutate(stressor = str_replace(stressor, pattern = "_", replacement = " "))
+      #what to do when there is a tie????????????
+  })
+
+  ###OFFICE HOURS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  #trying to make an expression that will slice whichever vulnerability scores are highest
+  #depending on if there is a tie or not
+  #reactive fxn for highest vuln score for a species
+  # most_impacted_stressor_reactive <- reactive({
+  #   fish_info %>% 
+  #     filter(species %in% input$pick_species1) %>% 
+  #     select(stressor,vuln) %>% 
+  #     arrange(desc(vuln)) %>% 
+  #     ifelse(fish_info$vuln[1]==fish_info$vuln[2], slice(2), slice(1))
+  #     slice(1) %>% 
+  #     select(stressor) %>% 
+  #     mutate(stressor = str_replace(stressor, pattern = "_", replacement = " "))
+  #   #what to do when there is a tie????????????
+  # })
+  
+  #reactive fxn for IUCN status
+  iucn_reactive<- reactive({
+    iucn_info %>% 
+      filter(scientific_name_lower %in% input$pick_species1) %>% 
+      select(iucn_status)
   })
   
+  iucn_meaning_reactive<-reactive({
+    iucn_meaning %>%
+      filter(iucn_status %in% iucn_reactive()) %>% 
+      select(info)
+  })
+  
+  #common name reactive
+  cm_reactive<- reactive({
+    iucn_info %>% 
+      filter(scientific_name_lower %in% input$pick_species1) %>% 
+      select(common_name)
+  })
+  
+  #scientific name upper case
+  sn_reactive<- reactive({
+    iucn_info %>% 
+      filter(scientific_name_lower %in% input$pick_species1) %>% 
+      select(scientific_name_cap) %>% 
+      toString() %>% 
+      str_trim()
+  })
+  
+  #reactive to remove _ from stressor for text output
+  stressor_clean_reactive <- reactive({
+    stressor_info %>% 
+    filter(stressor %in% input$pick_stressor1) %>% 
+    mutate(stressor = str_replace_all(stressor, pattern = "_", replacement = " ")) %>% 
+    select(stressor)
+  })
+  
+  #output with basic info about data that doesn't change
+  output$info<-renderText({
+    paste("This dataset examines the risk of impact 
+          of different environmental stressors on different marine species by intersecting 
+          spatial distributions according to each species' vulnerability to a given stressor.
+          This analysis specifically explore the vulnerability of high commercial value
+          marine fish species to different environmental stressors. You can learn more 
+          about the species and how the stressors were defined by changing the inputs 
+          in the panel on the left.")
+  })
+
   #output that creates text with species info
-  output$selected_var<-renderText({
-    paste(input$pick_species1, "has an IUCN status of","and is most impacted by")
+  #replaced input$pick_species1 with reactive function
+  output$species_info_text<-renderText({
+    paste(sn_reactive(),", also known as ", cm_reactive(), ", has an IUCN status of ",
+          iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", sn_reactive(), " is most vulnerable to",
+          most_impacted_stressor_reactive(), ". This means that if the species was exposed to the same intensity of
+          all stressors tested, then ", most_impacted_stressor_reactive() , " will have the greatest impact.", sep="")
   })
   
   #output that creates text with stressor info
   output$selected_var1<-renderText({
-    paste(input$pick_stressor1, ":", stressor_info_reactive())
+    paste("In this dataset,", stressor_clean_reactive(), " is calculated according to the following:", stressor_info_reactive())
     })
   
+  #reactive to produce file path of images
+  #this works
+  pic_reactive <- reactive({
+    iucn_info %>% 
+      filter(scientific_name_lower %in% input$pick_species1) %>% 
+      select(scientific_name_lower) %>% 
+      toString() %>% 
+      str_replace_all(pattern = " ", replacement = "_") 
+  })
+  
+  pic_file<-reactive({
+    paste("www/", pic_reactive(),".jpg", sep="") %>% 
+    as.character()
+  })
+  
+  #output for picture showing
+  output$image<- renderImage({
+    list(src = pic_file(),
+         #src = "www/brevoortia_patronus.jpg", #how I know this should work
+         width = "60%",
+         height = 350)
+  }, deleteFile = F)
+  
+  output$citation<-renderText({
+    paste("Data collected fom: O’Hara, C., Frazier, M., Valle, M., Butt, N., Kaschner, K., Klein, C.,
+          & Halpern, B. *Cumulative human impacts on global marine fauna highlight risk to
+          fragile functional diversity of marine ecosystems* [Unpublished manuscript")
+  })
+
+#plotting panel  
   #output that makes a reactive plot title
   output$plot_title<-renderText({
     paste("Impact of Stressors on", input$pick_species3)
@@ -151,24 +280,44 @@ server <- function(input, output) {
 
   #output that creates plot
   output$fish_info_plot <- renderPlot(
-    ggplot(data = fish_info_reactive(), aes(x = stressor, y=vuln)) +
-      geom_col(aes(color = vuln, fill=vuln)) + theme_minimal()+
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    ggplot(data = fish_info_reactive(), aes(x = reorder(stressor, -vuln), y=vuln)) +
+      geom_col(aes(fill=factor(vuln))) + theme_minimal()+
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+      scale_colour_brewer(palette = "Blues")+
+      scale_fill_brewer(palette = "Blues")+
+      xlab("Stressor")+
+      ylab("Vulnerability Score")+ 
+      guides(fill=guide_legend(title="Vulnerability Score"))
   )
   
+#summary table panel 
+  #chart title
+  output$chart_title<-renderText({
+    paste("Stressors with the Greatest Impact on", input$pick_species2)
+  })
+  
+  #data for the table
   table_data <- fish_info %>% 
     select(species, stressor, vuln)
   
+  table_data_1<- fish_info %>% 
+    select(stressor, vuln)
+  
+  #reactive function for the table inputs
   table_reactive <- reactive({
     table_data %>% 
       filter(species %in% input$pick_species2) %>% 
-      arrange(desc(vuln))
+      arrange(desc(vuln)) %>% 
+      select(stressor, vuln)
   })
 
+  #output that creates the table
   output$table = renderDT({
     datatable(table_reactive()) %>% 
-      DT::formatStyle(columns = names(table_data), color="lightgray") #column headers, show all rows at once
+      DT::formatStyle(columns = names(table_data_1), color="lightgray") #column headers, show all rows at once
   }) 
+
+  # Casey: We're writing the code to generate the map outside of the app to begin with, in "plot_testing.Rmd". We'll add it in once it's complete and behaving as expected.
 }
 
 shinyApp(ui = ui, server = server)
