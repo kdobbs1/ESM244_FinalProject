@@ -262,7 +262,7 @@ server <- function(input, output) {
   output$citation<-renderText({
     paste("Data collected fom: O’Hara, C., Frazier, M., Valle, M., Butt, N., Kaschner, K., Klein, C.,
           & Halpern, B. *Cumulative human impacts on global marine fauna highlight risk to
-          fragile functional diversity of marine ecosystems* [Unpublished manuscript")
+          fragile functional diversity of marine ecosystems* [Unpublished manuscript]")
   })
 
 #plotting panel  
