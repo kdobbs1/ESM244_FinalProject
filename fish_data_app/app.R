@@ -226,8 +226,7 @@ ui <- fluidPage(
   # tags$head(
   #   tags$link(rel = "stylesheet", type = "text/css", href = "fish.css")
   # ),
-  theme=shinytheme("slate"),
- # theme = "ocean.css",
+  theme=shinytheme("superhero"),
   navbarPage("Relative Impacts of Stressors on Commercially Viable Fish",
              tabPanel("Info", fluid=TRUE, icon=icon("fish"),
                       sidebarLayout(
@@ -257,7 +256,23 @@ ui <- fluidPage(
                           #select species
                           radioButtons(inputId = "pick_species2",
                                              label = "Choose species:",
-                                             choices = unique(fish_info$species)),
+                                             #choices = unique(fish_info$species)),
+                                      choices = c("Gulf menhaden"="brevoortia patronus",
+                                                   "Milkfish"="chanos chanos",
+                                                   "Atlantic herring"="clupea harengus",
+                                                   "Japanese anchovy"="engraulis japonicus",
+                                                   "Peruvian anchoveta"="engraulis ringens",
+                                                   "Atlantic cod"="gadus morhua",
+                                                   "Skipjack tuna"="katsuwonus pelamis",
+                                                   "Capelin"="mallotus villosus",
+                                                   "Rainbow trout"="oncorhynchus mykiss",
+                                                   "Atlantic salmon"="salmo salar",
+                                                   "European pilchard"="sardina pilchardus",
+                                                   "Indian oil sardine"="sardinella longiceps",
+                                                   "Chub mackerel"="scomber japonicus",
+                                                   "Atlantic mackerel"="scomber scombrus",
+                                                   "Yellowfin tuna"="thunnus albacares",
+                                                   "Largehead hairtail"="trichiurus lepturus")),
                           #select stressor
                           # checkboxGroupInput(inputId = "pick_stressor2",
                           #                    label = "Choose stressor",
@@ -276,22 +291,22 @@ ui <- fluidPage(
                         sidebarPanel(selectInput(inputId = "pick_species3",
                                                   label = "Choose species:",
                                                   #choices = unique(fish_info$species), 
-                                                  choices = c("Brevoortia patronus"="brevoortia patronus",
-                                                              "*Chanos chanos*"="chanos chanos",
-                                                              "*Clupea harengus*"="clupea harengus",
-                                                              "*Engrulis japonicus*"="engrulis japonicus",
-                                                              "*Engraulis ringens*"="engraulis ringens",
-                                                              "*Gadus morhua*"="gadus morhua",
-                                                              "*Katsuwonus pelamis*"="katsuwonus pelamis",
-                                                              "*Mallotus villosus*"="mallotus villosus",
-                                                              "*Oncorhynchus mykiss*"="oncorhynchus mykiss",
-                                                              "*Salmo salar*"="salmo salar",
-                                                              "*Sardina pilchardus*"="sardina pilchardus",
-                                                              "*Sardinella longiceps*"="sardinella longiceps",
-                                                              "*Scomber japonicus*"="scomber japonicus",
-                                                              "*Scomber scombrus*"="scomber scombrus",
-                                                              "*Thunnus albacares*"="thunnus albacares",
-                                                              "*Trichiurus lepturus*"="trichiurus lepturus"
+                                                  choices = c("Gulf menhaden"="brevoortia patronus",
+                                                              "Milkfish"="chanos chanos",
+                                                              "Atlantic herring"="clupea harengus",
+                                                              "Japanese anchovy"="engraulis japonicus",
+                                                              "Peruvian anchoveta"="engraulis ringens",
+                                                              "Atlantic cod"="gadus morhua",
+                                                              "Skipjack tuna"="katsuwonus pelamis",
+                                                              "Capelin"="mallotus villosus",
+                                                              "Rainbow trout"="oncorhynchus mykiss",
+                                                              "Atlantic salmon"="salmo salar",
+                                                              "European pilchard"="sardina pilchardus",
+                                                              "Indian oil sardine"="sardinella longiceps",
+                                                              "Chub mackerel"="scomber japonicus",
+                                                              "Atlantic mackerel"="scomber scombrus",
+                                                              "Yellowfin tuna"="thunnus albacares",
+                                                              "Largehead hairtail"="trichiurus lepturus"
                                                               ),
                                                   selected = fish_info$species[2]),
                                      checkboxGroupInput(inputId = "pick_stressor3",
@@ -300,7 +315,7 @@ ui <- fluidPage(
                                                         selected = c(fish_info$stressor[1], fish_info$stressor[5], fish_info$stressor[8]))
                         ),
                         
-                        mainPanel(textOutput("plot_title"), plotOutput('fish_info_plot'))
+                        mainPanel(uiOutput("plot_title"), plotOutput('fish_info_plot'))
                         
                         
                       )
@@ -419,8 +434,8 @@ server <- function(input, output) {
   output$info<-renderText({
     paste("This dataset examines the risk of impact 
           of different environmental stressors on different marine species by intersecting 
-          spatial distributions according to each species' vulnerability to a given stressor.
-          This analysis specifically explore the vulnerability of high commercial value
+          spatial distributions according to each species' vulnerability to a given stressor
+          from 2015 to 2020. This analysis specifically explore the vulnerability of high commercial value
           marine fish species to different environmental stressors. You can learn more 
           about the species and how the stressors were defined by changing the inputs 
           in the panel on the left.")
@@ -489,10 +504,17 @@ server <- function(input, output) {
   })
 
 ##################### plotting panel ####################### 
+  ######GO BACK TO THIS
+  #reactive fxn for plot title italics
+  # fish_info_reactive <- reactive({
+  #   fish_info %>%
+  #     filter(species %in% input$pick_species3) %>%
+  #     filter(stressor %in% input$pick_stressor3) %>% 
+  #     toString()
+  # })
+  
   #output that makes a reactive plot title
-  output$plot_title<-renderText({
-    paste("Impact of Stressors on", input$pick_species3)
-  })
+  output$plot_title<-renderUI(HTML(paste("Impact of Stressors on", em(input$pick_species3))))
   
   #reactive fxn for plot
   fish_info_reactive <- reactive({
@@ -536,7 +558,7 @@ server <- function(input, output) {
 
   #output that creates the table
   output$table = renderDT({
-    datatable(table_reactive()) %>% 
+    datatable(table_reactive(), style = "bootstrap") %>% 
       DT::formatStyle(columns = names(table_data_1), color="lightgray") #column headers, show all rows at once
   }) 
 
