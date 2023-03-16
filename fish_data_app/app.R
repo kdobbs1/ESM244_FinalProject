@@ -116,7 +116,9 @@ stressor_tif_dict <- c("air_temp" = "",
                        "wildlife_strike" = ""
 )
 
+####################################################################
 ##################### Define mapping function ######################
+####################################################################
 
 map_stress_range <- function(species_name, stressor_name) {
   
@@ -209,8 +211,9 @@ map_stress_range <- function(species_name, stressor_name) {
 
 
 
-
-################## User Interface
+#######################################################
+################## User Interface #####################
+#######################################################
 
 ui <- fluidPage(
   tags$script(src = "https://kit.fontawesome.com/4ee2c5c2ed.js"), 
