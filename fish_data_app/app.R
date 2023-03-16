@@ -55,13 +55,19 @@ iucn_meaning<-read_csv(here("fish_data_app/data", "iucn_meaning.csv"))
 
 fish_info_map <- read_csv(here(data_path, 'fish_info.csv'))  %>% 
   filter(stressor!="air_temp",
-         stressor != 'biomass_removal',
+         stressor!='biomass_removal',
+         stressor!='entanglement_macroplastic',
          stressor!="inorganic_pollution",
+         stressor!="habitat_loss_degradation",
+         stressor!="noise_pollution",
          stressor!="oceanographic",
+         stressor!="organic_pollution",
          stressor!="poisons_toxins",
          stressor!="organic_pollution",
          stressor!="salinity",
-         stressor!="storm_disturbance") 
+         stressor!="sedimentation",
+         stressor!="storm_disturbance",
+         stressor!="wildlife_strike") 
 
 am_species <- c('chanos chanos', 
                 'gadus morhua', 
