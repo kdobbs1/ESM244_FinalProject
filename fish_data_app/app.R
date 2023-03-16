@@ -9,6 +9,13 @@ library(DT)
 library(ggplot2)
 library(RColorBrewer)
 
+# for mapping
+library(terra)
+library(sf)
+library(mapproj)
+library(maptools)
+library(ggnewscale)
+
 
 ################# Setting paths
 
@@ -45,6 +52,16 @@ stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>%
 iucn_meaning<-read_csv(here("fish_data_app/data", "iucn_meaning.csv"))
 
 ##### For map
+
+fish_info_map <- read_csv(here(data_path, 'fish_info.csv'))  %>% 
+  filter(stressor!="air_temp",
+         stressor != 'biomass_removal',
+         stressor!="inorganic_pollution",
+         stressor!="oceanographic",
+         stressor!="poisons_toxins",
+         stressor!="organic_pollution",
+         stressor!="salinity",
+         stressor!="storm_disturbance") 
 
 am_species <- c('chanos chanos', 
                 'gadus morhua', 
@@ -99,7 +116,96 @@ stressor_tif_dict <- c("air_temp" = "",
                        "wildlife_strike" = ""
 )
 
-##### Make region limits
+##################### Define mapping function ######################
+
+map_stress_range <- function(species_name, stressor_name) {
+  
+  stressor_choice <- c(stressor_name)
+  species_choice <- species_name
+  
+  # format inputs for feeding to file chains
+  species_choice_formatted <- sub(' ', '_', tolower(species_choice))
+  species_name_file <- species_choice_formatted
+  # set source depending on species
+  src <- ''
+  if (species_choice %in% am_species) {
+    src <- 'am'
+  }
+  if (species_choice %in% iucn_species) {
+    src <- 'iucn'
+    species_name_file <- iucn_species_dict[species_choice]
+  }
+  
+  ##### format STRESSOR file names for calls according to choice
+  # initialize path and name variables
+  stressor_tif_name <- ''
+  stressor_tif_path_addition <- ''
+  stressor_tif_path <- ''
+  # add to path and name for sea surface temperature maps
+  if (stressor_choice == "sst_rise") {
+    sst_tif_prefix <- '_spp_max_temp_'
+    stressor_tif_path_addition <- 'sst_rise_maps'
+    stressor_tif_name <- paste(src, sst_tif_prefix, species_name_file, sep = '')
+    stressor_tif_path_addition <- 'sst_rise_maps'
+  } else {                                    # for all other files, refer to the dictionary
+    stressor_tif_name <- stressor_tif_dict[stressor_choice]
+    stressor_tif_path_addition <- 'stressor_maps'
+  }
+  
+  stressor_tif_folder <- paste(data_path, '/', stressor_tif_path_addition, sep = '')
+  stressor_tif_path <- paste(stressor_tif_folder, '/', stressor_tif_name, '.tif', sep = '')
+  
+  ##### Format SPECIES range file name for calls
+  species_range_file <- paste(src, '_spp_mol_', species_name_file, sep = '')
+  species_range_csv_path <- paste(data_path, '/species_ranges/', species_range_file, '.csv', sep = '')
+  species_range_df = read_csv(here(species_range_csv_path))
+  # csv processing depends on the data source
+  if (src == 'iucn') {
+    species_which <- 'presence'
+  } else {          # for src == 'am'
+    species_range_df <- species_range_df %>% 
+      filter(prob >= 0.5) %>% 
+      drop_na()
+    species_which <- 'prob'
+  }
+  
+  ##### Capture species vulernability to the chosen stressor
+  species_vuln <- fish_info_map %>% 
+    filter(species == species_choice, stressor == stressor_choice) %>% 
+    pull(vuln)
+  
+  ##### Generate rasters for stressor and species range
+  # Also change the CRS
+  crs_proj <- 'epsg:4326'
+  stressor_rast <- rast(here(stressor_tif_path)) %>% 
+  terra::project(crs_proj)
+  # call helper function to make raster from csv
+  species_rast <- map_to_mol(species_range_df,
+                             by = 'cell_id',
+                             which = species_which,
+                             ocean_mask = TRUE) %>% 
+  terra::project(crs_proj)  
+  
+  # Make separate rasters that are mutually exclusive; for species stress and stressor
+  stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the stressor map to where the species range is
+  product_rast <- stressor_intersect * species_rast                   # calculate species stress
+  inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)
+  
+  ######### Actually make the plot ##########
+  species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>%
+    rename_with(.cols = 3, ~ 'species_stress')
+  stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
+    rename_with(.cols = 3, ~ 'stress')
+  species_stress_map <- ggplot() +
+    geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
+    scale_fill_gradient(low = 'white', high = 'red4') +
+    new_scale_fill() +
+    geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+    scale_fill_gradient(low = 'white', high = 'blue4') +
+    theme_void()
+  
+  return(species_stress_map)
+}
 
 
 
@@ -195,10 +301,10 @@ ui <- fluidPage(
                         sidebarPanel (
                                         selectInput(inputId = "pick_stressor4",
                                                     label = "Choose stressor:",
-                                                    choices = unique(fish_info$stressor)),
+                                                    choices = unique(fish_info_map$stressor)),
                                         selectInput(inputId = "pick_species4",       #need unique inputIds per widget
                                                            label = "Choose Species:",
-                                                           choices = unique(fish_info$species)),
+                                                           choices = unique(fish_info_map$species)),
                                         
                         ),
                         
@@ -430,114 +536,15 @@ server <- function(input, output) {
     input$pick_stressor4
   })
   map_species_reactive <- reactive({
-    input$pick_stressor4
+    input$pick_species4
   })
-  
   
   ####### Process data for map #######
   
   output$species_stress_map = renderPlot({
-
-    stressor_choice <- c(map_stress_reactive())
-    species_choice <- map_species_reactive()
     
-    # format inputs for feeding to file chains
-    species_choice_formatted <- sub(' ', '_', tolower(species_choice))
-    species_name_file <- species_choice_formatted
-    
-    # set source depending on species
-    src <- ''
-    if (species_choice %in% am_species) {
-      src <- 'am'
-    }
-    if (species_choice %in% iucn_species) {
-      src <- 'iucn'
-      species_name_file <- iucn_species_dict[species_choice]
-    }
-    
-    
-    ##### format STRESSOR file names for calls according to choice
-    
-    # initialize path and name variables
-    stressor_tif_name <- ''
-    stressor_tif_path_addition <- ''
-    stressor_tif_path <- ''
-    
-    # add to path and name for sea surface temperature maps
-    if (stressor_choice == "sst_rise") {
-      
-      sst_tif_prefix <- '_spp_max_temp_'
-      stressor_tif_path_addition <- 'sst_rise_maps'
-      
-      stressor_tif_name <- paste(src, sst_tif_prefix, species_name_file, sep = '')
-      stressor_tif_path_addition <- 'sst_rise_maps'
-      
-    } else {                                    # for all other files, refer to the dictionary
-      stressor_tif_name <- stressor_tif_dict[stressor_choice]
-      stressor_tif_path_addition <- 'stressor_maps'
-    }
-    
-    stressor_tif_folder <- paste(data_path, '/', stressor_tif_path_addition, sep = '')
-    stressor_tif_path <- paste(stressor_tif_folder, '/', stressor_tif_name, '.tif', sep = '')
-    
-    
-    ##### Format SPECIES range file name for calls
-    
-    species_range_file <- paste(src, '_spp_mol_', species_name_file, sep = '')
-    species_range_csv_path <- paste(data_path, '/species_ranges/', species_range_file, '.csv', sep = '')
-    species_range_df = read_csv(here(species_range_csv_path))
-    
-    # csv processing depends on the data source
-    if (src == 'iucn') {
-      species_which <- 'presence'
-    } else {          # for src == 'am'
-      species_range_df <- species_range_df %>% 
-        filter(prob >= 0.5) %>% 
-        drop_na()
-      species_which <- 'prob'
-    }
-    
-    
-    ##### Capture species vulernability to the chosen stressor
-    
-    species_vuln <- fish_info %>% 
-      filter(species == species_choice, stressor == stressor_choice) %>% 
-      pull(vuln)
-    
-    ##### Generate rasters for stressor and species range
-    # Also change the CRS
-    crs_proj <- 'epsg:4326'
-    stressor_rast <- rast(here(stressor_tif_path)) %>% 
-      project(crs_proj)
-    
-    # call helper function to make raster from csv
-    species_rast <- map_to_mol(species_range_df,
-                               by = 'cell_id',
-                               which = species_which,
-                               ocean_mask = TRUE) %>% 
-      project(crs_proj)  
-    
-    # Make separate rasters that are mutually exclusive; for species stress and stressor
-    stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the stressor map to where the species range is
-    product_rast <- stressor_intersect * species_rast                   # calculate species stress
-    inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)
-    
-    ######### Actually make the plot ##########
-    
-    species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>%
-      rename_with(.cols = 3, ~ 'species_stress')
-    stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
-      rename_with(.cols = 3, ~ 'stress')
-    
-    species_stress_map <- ggplot() +
-      geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
-      scale_fill_gradient(low = 'orange1', high = 'red4') +
-      new_scale_fill() +
-      geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
-      scale_fill_gradient(low = 'cyan1', high = 'blue4') +
-      theme_void()
-    
-    species_stress_map
+    map_stress_range(species_name = map_species_reactive(), stressor_name = map_stress_reactive())
+  
   })
   
   

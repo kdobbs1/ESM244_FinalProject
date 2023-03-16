@@ -14,7 +14,7 @@ library(terra)
 # library(tidyterra)        # for mapping terra rasters
 library(sf)
 library(tmap)
-library(mapproj)
+#library(mapproj)
 library(maptools)
 library(ggnewscale)
 library(here)
@@ -136,7 +136,7 @@ stressor_tif_dict <- c("air_temp" = "",
 ```{r, message = FALSE}
 
 region_choice <- 1
-stressor_choice <- c('uv_radiation')
+stressor_choice <- c('biomass_removal')
 species_choice <- 'oncorhynchus mykiss'
 
 # format inputs for feeding to file chains
@@ -215,7 +215,7 @@ species_vuln <- fish_info %>%
 crs_proj <- 'epsg:4326'
 
 stressor_rast <- rast(here(stressor_tif_path)) %>% 
-  project(crs_proj)
+  terra::project(crs_proj)
 
 
 
@@ -224,7 +224,7 @@ species_rast <- map_to_mol(species_range_df,
                            by = 'cell_id',
                            which = species_which,
                            ocean_mask = TRUE) %>% 
-  project(crs_proj)  
+  terra::project(crs_proj)  
 
 
 # Make separate rasters that are mutually exclusive; for species stress and stressor
