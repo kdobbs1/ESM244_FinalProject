@@ -8,6 +8,7 @@ library(knitr)
 library(DT)
 library(ggplot2)
 library(RColorBrewer)
+library(dplyr)
 
 # for mapping
 library(terra)
@@ -50,7 +51,8 @@ stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>%
   filter(stressor!="storm_disturbance") %>% 
   mutate(stressor = str_replace_all(stressor, pattern = "_", replacement = " "))
 iucn_meaning<-read_csv(here("fish_data_app/data", "iucn_meaning.csv"))
-
+#merge fish info with iucn info in order to connect common name to scientific name
+fish_info<-left_join(fish_info, iucn_info, by=c('species'='scientific_name_lower'))
 ##### For map
 
 fish_info_map <- read_csv(here(data_path, 'fish_info.csv'))  %>% 
@@ -504,18 +506,29 @@ server <- function(input, output) {
   })
 
 ##################### plotting panel ####################### 
-  ######GO BACK TO THIS
-  #reactive fxn for plot title italics
-  # fish_info_reactive <- reactive({
-  #   fish_info %>%
-  #     filter(species %in% input$pick_species3) %>%
-  #     filter(stressor %in% input$pick_stressor3) %>% 
-  #     toString()
-  # })
+  #common name reactive for plot title
+  cm_plot_reactive<- reactive({
+    fish_info %>% 
+      filter(species %in% input$pick_species3) %>% 
+      select(common_name) %>% 
+      unique()
+  })
+  
+  #upper case scientific name reactive for plot title
+  sci_name_reactive<- reactive({
+    fish_info %>% 
+      filter(species %in% input$pick_species3) %>% 
+      select(scientific_name_cap) %>% 
+      toString() %>% 
+      unique() 
+    })
   
   #output that makes a reactive plot title
-  output$plot_title<-renderUI(HTML(paste("Impact of Stressors on", em(input$pick_species3))))
-  
+  output$plot_title<-renderUI(HTML(paste("Impact of Stressors on", em(sci_name_reactive()),
+                                         "otherwise known as", cm_plot_reactive())))
+  # output$plot_title<-renderUI(HTML(paste("Impact of Stressors on", em(input$pick_species3),
+  #                                        "otherwise known as", cm_plot_reactive())))
+  # 
   #reactive fxn for plot
   fish_info_reactive <- reactive({
     fish_info %>%
