@@ -233,7 +233,7 @@ ui <- fluidPage(
              tabPanel("Info", fluid=TRUE, icon=icon("fish"),
                       sidebarLayout(
                         sidebarPanel(
-                          titlePanel("Learn more about the data here:"),
+                          titlePanel(h5("Change these selections to learn about different species and stressors:")),
                           #Select species
                           selectInput(inputId = "pick_species1",
                                                 label = "Choose species:",
@@ -246,7 +246,15 @@ ui <- fluidPage(
                                                 selected="biomass_removal")
                                         ),
                         
-                        mainPanel (textOutput("info"), textOutput("species_info_text"), textOutput("selected_var1"), imageOutput("image"), textOutput("citation"))
+                        mainPanel(h3(strong("Information about the Data")),
+                                  textOutput("info"),
+                                  h3(strong(uiOutput("fish_subheading"))),
+                                  imageOutput("image"), 
+                                  textOutput("species_info_text"), 
+                                  h3(strong(uiOutput("stressor_subheading"))),
+                                  textOutput("selected_var1"), 
+                                  h3(strong("Data Citation")),
+                                  textOutput("citation"))
                 #
                       )
                     ),
@@ -254,7 +262,7 @@ ui <- fluidPage(
                       #icon=icon("", lib = "font-awesome"),
                       sidebarLayout(
                         sidebarPanel (
-                          titlePanel("Title Here"),
+                          titlePanel(""),
                           #select species
                           radioButtons(inputId = "pick_species2",
                                              label = "Choose species:",
@@ -285,7 +293,7 @@ ui <- fluidPage(
                                             # choices = unique(region_info$realm))
                          
                            ),
-                         mainPanel(textOutput("chart_title"), DTOutput('table'))
+                         mainPanel(uiOutput("chart_title"), DTOutput('table'))
                          )
                       ),
              tabPanel("Vulnerability Chart", fluid=TRUE, icon = icon("chart-column"), 
@@ -404,6 +412,30 @@ server <- function(input, output) {
     select(stressor)
   })
   
+  cm_plot_reactive_info<- reactive({
+    fish_info %>% 
+      filter(species %in% input$pick_species1) %>% 
+      select(common_name) %>% 
+      unique()
+  })
+  
+  #upper case scientific name reactive for plot title
+  sci_name_reactive_info<- reactive({
+    fish_info %>% 
+      filter(species %in% input$pick_species1) %>% 
+      select(scientific_name_cap) %>% 
+      unique() %>% 
+      toString() 
+  })
+  
+  #output that makes a reactive heading telling us which fish we are learning about
+  output$fish_subheading<-renderUI(HTML(paste("Learn more about", cm_plot_reactive_info()," (",
+                                          em(sci_name_reactive_info()), ")"), sep=""))
+  
+  #output that makes a reactive heading telling us more about how stressors are defined
+  output$stressor_subheading<-renderUI(HTML(paste("Discover how each stressor", input$pick_stressor_1,
+                                                  " is defined"), sep=""))
+  
   #output with basic info about data that doesn't change
   output$info<-renderText({
     paste("This dataset examines the risk of impact 
@@ -497,7 +529,7 @@ server <- function(input, output) {
   
   #output that makes a reactive plot title
   output$plot_title<-renderUI(HTML(paste("Vulnerability of ", cm_plot_reactive()," (",
-                                         em(sci_name_reactive()), ") to Stressors")))
+                                         em(sci_name_reactive()), ") to Stressors"), sep=""))
  
   #reactive fxn for plot
   fish_info_reactive <- reactive({
@@ -519,10 +551,30 @@ server <- function(input, output) {
   )
   
 ####################### summary table panel #####################
-  #chart title
-  output$chart_title<-renderText({
-    paste("Stressors with the Greatest Impact on", input$pick_species2)
+  cm_plot_reactive_table<- reactive({
+    fish_info %>% 
+      filter(species %in% input$pick_species2) %>% 
+      select(common_name) %>% 
+      unique()
   })
+  
+  #upper case scientific name reactive for plot title
+  sci_name_reactive_table<- reactive({
+    fish_info %>% 
+      filter(species %in% input$pick_species2) %>% 
+      select(scientific_name_cap) %>% 
+      unique() %>% 
+      toString() 
+  })
+  
+  #output that makes a reactive chart title
+  output$chart_title<-renderUI(HTML(paste("Top Ten Stressors that ", cm_plot_reactive_table()," (",
+                                         em(sci_name_reactive_table()), ") is Vulnerable to"), sep=""))
+  
+  # #chart title
+  # output$chart_title<-renderText({
+  #   paste("Stressors with the Greatest Impact on", input$pick_species2)
+  # })
   
   #data for the table
   table_data <- fish_info %>% 
