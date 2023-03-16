@@ -288,7 +288,7 @@ ui <- fluidPage(
                          mainPanel(textOutput("chart_title"), DTOutput('table'))
                          )
                       ),
-             tabPanel("Plotting", fluid=TRUE, icon = icon("chart-column"), 
+             tabPanel("Vulnerability Chart", fluid=TRUE, icon = icon("chart-column"), 
                       sidebarLayout(
                         sidebarPanel(selectInput(inputId = "pick_species3",
                                                   label = "Choose species:",
@@ -353,34 +353,6 @@ server <- function(input, output) {
       select(exp)
   })
 
-  # #reactive fxn for highest vuln score for a species
-  # most_impacted_stressor_reactive <- reactive({
-  #   fish_info %>%
-  #     filter(species %in% input$pick_species1) %>%
-  #     select(stressor,vuln) %>%
-  #     arrange(desc(vuln)) %>%
-  #     slice(1) %>%
-  #     select(stressor) %>%
-  #     mutate(stressor = str_replace(stressor, pattern = "_", replacement = " "))
-  #     #what to do when there is a tie????????????
-  # })
-
-  ###OFFICE HOURS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  #trying to make an expression that will slice whichever vulnerability scores are highest
-  #depending on if there is a tie or not
-  #reactive fxn for highest vuln score for a species
-  # most_impacted_stressor_reactive <- reactive({
-  #   fish_info %>% 
-  #     filter(species %in% input$pick_species1) %>% 
-  #     select(stressor,vuln) %>% 
-  #     arrange(desc(vuln)) %>% 
-  #     ifelse(fish_info$vuln[1]==fish_info$vuln[2], slice(2), slice(1))
-  #     slice(1) %>% 
-  #     select(stressor) %>% 
-  #     mutate(stressor = str_replace(stressor, pattern = "_", replacement = " "))
-  #   #what to do when there is a tie????????????
-  # })
-  
   ### Seth's attempt
   most_impacted_stressor_reactive <- reactive({
     fish_info %>%
@@ -519,16 +491,14 @@ server <- function(input, output) {
     fish_info %>% 
       filter(species %in% input$pick_species3) %>% 
       select(scientific_name_cap) %>% 
-      toString() %>% 
-      unique() 
+      unique() %>% 
+      toString() 
     })
   
   #output that makes a reactive plot title
-  output$plot_title<-renderUI(HTML(paste("Impact of Stressors on", em(sci_name_reactive()),
-                                         "otherwise known as", cm_plot_reactive())))
-  # output$plot_title<-renderUI(HTML(paste("Impact of Stressors on", em(input$pick_species3),
-  #                                        "otherwise known as", cm_plot_reactive())))
-  # 
+  output$plot_title<-renderUI(HTML(paste("Vulnerability of ", cm_plot_reactive()," (",
+                                         em(sci_name_reactive()), ") to Stressors")))
+ 
   #reactive fxn for plot
   fish_info_reactive <- reactive({
     fish_info %>%
