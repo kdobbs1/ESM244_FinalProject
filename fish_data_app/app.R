@@ -263,8 +263,8 @@ ui <- fluidPage(
                         mainPanel(h3(strong("Information about the Data")),
                                   textOutput("info"),
                                   h3(strong(uiOutput("fish_subheading"))),
+                                  textOutput("species_info_text"), #this text doesn't work
                                   imageOutput("image"), 
-                                  textOutput("species_info_text"), 
                                   h3(strong(uiOutput("stressor_subheading"))),
                                   textOutput("selected_var1"), 
                                   h3(strong("Data Citation")),
@@ -454,7 +454,7 @@ server <- function(input, output) {
     paste("This dataset examines the risk of impact 
           of different environmental stressors on different marine species by intersecting 
           spatial distributions according to each species' vulnerability to a given stressor
-          from 2015 to 2020. This analysis specifically explore the vulnerability of high commercial value
+          from 2015 to 2020. This analysis specifically explores the vulnerability of high commercial value
           marine fish species to different environmental stressors. You can learn more 
           about the species and how the stressors were defined by changing the inputs 
           in the panel on the left.")
@@ -557,7 +557,8 @@ server <- function(input, output) {
       geom_col(aes(fill=factor(vuln))) + 
       theme_light()+
       theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-            panel.background = element_rect(colour ="purple"), 
+            panel.background = element_rect(colour = "#6D9EC1",
+                                           size = 2, linetype = "solid"), 
             axis.title=element_text(size=14), 
             axis.text=element_text(size=12),
             legend.position = "none")+
