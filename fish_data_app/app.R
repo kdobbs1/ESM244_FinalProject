@@ -30,25 +30,39 @@ source(here(data_path, 'helper_fxns.R'))
 ##### fish info
 
 fish_info<-read_csv(here("fish_data_app/data", "fish_info.csv")) %>% 
-  filter(stressor!="air_temp") %>% 
-  filter(stressor!="inorganic_pollution") %>%
-  filter(stressor!="oceanographic") %>%
-  filter(stressor!="poisons_toxins") %>%
-  filter(stressor!="organic_pollution") %>%
-  filter(stressor!="salinity") %>%
-  filter(stressor!="storm_disturbance")%>% 
+  filter(stressor!="air_temp",
+         stressor!='biomass_removal',
+         stressor!='entanglement_macroplastic',
+         stressor!="inorganic_pollution",
+         stressor!="habitat_loss_degradation",
+         stressor!="noise_pollution",
+         stressor!="oceanographic",
+         stressor!="organic_pollution",
+         stressor!="poisons_toxins",
+         stressor!="organic_pollution",
+         stressor!="salinity",
+         stressor!="sedimentation",
+         stressor!="storm_disturbance",
+         stressor!="wildlife_strike") %>% 
   mutate(stressor = str_replace_all(stressor, pattern = "_", replacement = " "))
 region_info<-read_csv(here("fish_data_app/data/spatial", "meow_rgns.csv"))
 iucn_info<-read_csv(here("fish_data_app/data", "IUCN_data.csv")) %>% 
   janitor::clean_names()
 stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>% 
-  filter(stressor!="air_temp") %>% 
-  filter(stressor!="inorganic_pollution") %>%
-  filter(stressor!="oceanographic") %>%
-  filter(stressor!="poisons_toxins") %>%
-  filter(stressor!="organic_pollution") %>%
-  filter(stressor!="salinity") %>%
-  filter(stressor!="storm_disturbance") %>% 
+  filter(stressor!="air_temp",
+         stressor!='biomass_removal',
+         stressor!='entanglement_macroplastic',
+         stressor!="inorganic_pollution",
+         stressor!="habitat_loss_degradation",
+         stressor!="noise_pollution",
+         stressor!="oceanographic",
+         stressor!="organic_pollution",
+         stressor!="poisons_toxins",
+         stressor!="organic_pollution",
+         stressor!="salinity",
+         stressor!="sedimentation",
+         stressor!="storm_disturbance",
+         stressor!="wildlife_strike")  %>% 
   mutate(stressor = str_replace_all(stressor, pattern = "_", replacement = " "))
 iucn_meaning<-read_csv(here("fish_data_app/data", "iucn_meaning.csv"))
 #merge fish info with iucn info in order to connect common name to scientific name
@@ -179,7 +193,7 @@ map_stress_range <- function(species_name, stressor_name) {
     species_which <- 'prob'
   }
   
-  ##### Capture species vulernability to the chosen stressor
+  ##### Capture species vulnerability to the chosen stressor
   species_vuln <- fish_info_map %>% 
     filter(species == species_choice, stressor == stressor_choice) %>% 
     pull(vuln)
@@ -258,11 +272,10 @@ ui <- fluidPage(
                 #
                       )
                     ),
-             tabPanel("Summary Table", fluid=TRUE, icon = icon("table"),
+             tabPanel("Ranked Stressors", fluid=TRUE, icon = icon("table"),
                       #icon=icon("", lib = "font-awesome"),
                       sidebarLayout(
-                        sidebarPanel (
-                          titlePanel(""),
+                        sidebarPanel(
                           #select species
                           radioButtons(inputId = "pick_species2",
                                              label = "Choose species:",
@@ -330,7 +343,7 @@ ui <- fluidPage(
                         
                       )
                       ),
-             tabPanel("Mapping", fluid=TRUE, icon=icon("globe-americas"), 
+             tabPanel("Mapping Vulnerability", fluid=TRUE, icon=icon("globe-americas"), 
                       sidebarLayout(
                         sidebarPanel (
                                         selectInput(inputId = "pick_stressor4",
@@ -339,7 +352,7 @@ ui <- fluidPage(
                                         selectInput(inputId = "pick_species4",       #need unique inputIds per widget
                                                            label = "Choose Species:",
                                                            choices = unique(fish_info_map$species)),
-                                        
+                                                
                         ),
                         
                         mainPanel (textOutput("OUTPUT"), plotOutput('species_stress_map'))
@@ -541,13 +554,20 @@ server <- function(input, output) {
   #output that creates plot
   output$fish_info_plot <- renderPlot(
     ggplot(data = fish_info_reactive(), aes(x = reorder(stressor, -vuln), y=vuln)) +
-      geom_col(aes(fill=factor(vuln))) + theme_minimal()+
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+      geom_col(aes(fill=factor(vuln))) + 
+      theme_light()+
+      theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+            panel.background = element_rect(colour ="purple"), 
+            axis.title=element_text(size=14), 
+            axis.text=element_text(size=12),
+            legend.position = "none")+
       scale_colour_brewer(palette = "Blues")+
       scale_fill_brewer(palette = "Blues")+
       xlab("Stressor")+
-      ylab("Vulnerability Score")+ 
-      guides(fill=guide_legend(title="Vulnerability Score"))
+      ylab("Vulnerability Score")+
+      geom_text(aes(label = vuln), vjust = -0.2)+
+      guides(fill=guide_legend(title="Vulnerability Score")),
+    height = 550
   )
   
 ####################### summary table panel #####################
