@@ -89,6 +89,9 @@ uv_df <- rast(here(data_path, 'stressor_maps', 'uv_radiation_2020.tif')) %>%
 regions_df <- rast(here(data_path, 'spatial', 'meow_rgns_mol.tif')) %>% 
   map_to_df()
 meow<-read_csv(here(data_path, 'spatial', 'meow_rgns.csv')) %>% as.data.frame() %>% dplyr::select(rlm_code, realm, eco_code_x)
+#merge dfs
+df_list <- list(bycatch_df, eu_df, lp_df, mhw_df, oceana_df, plasticp_df, uv_df, regions_df)
+
 ##### For map
 
 fish_info_map <- read_csv(here(data_path, 'fish_info.csv'))  %>% 
@@ -382,20 +385,15 @@ ui <- fluidPage(
                         
                       )
                       ),
-             tabPanel("Chart by Realm", fluid=TRUE, icon=icon("globe-americas"), 
+             tabPanel("Stressor by Realm", fluid=TRUE, icon=icon("location-dot"), 
                       sidebarLayout(
-                        sidebarPanel (
-                                        selectInput(inputId = "pick_stressor4",
-                                                    label = "Choose stressor:",
-                                                    choices = unique(fish_info_map$stressor),
-                                                    selected = 'ocean_acidification'),
-                                        selectInput(inputId = "pick_species4",       #need unique inputIds per widget
-                                                           label = "Choose Species:",
-                                                           choices = unique(fish_info_map$species)),
+                        sidebarPanel (selectInput(inputId = "pick_realm",       #need unique inputIds per widget
+                                                           label = "Choose Realm:",
+                                                           choices = unique(merge2$realm)),
                                                 
                         ),
                         
-                        mainPanel (textOutput("OUTPUT"))
+                        mainPanel (textOutput("OUTPUT"), DTOutput('realm_table'))
                         
                         
                       )
@@ -683,7 +681,24 @@ server <- function(input, output) {
     datatable(table_reactive(), style = "bootstrap") %>% 
       DT::formatStyle(columns = names(table_data_1), color="lightgray") #column headers, show all rows at once
   }) 
-
+  ######################### realm stressor panel #########################
+  #data for this table
+  merge<-df_list %>% reduce(full_join, by='cell_id') %>% drop_na()
+  merge2<-dplyr::full_join(merge, meow, by = c("meow_rgns_mol"="eco_code_x")) %>% 
+    group_by(realm) %>% 
+    summarize(across(.cols=bycatch_benthic_2017:uv_radiation_2020, .fns=mean))
+  
+  #reactive function for the table inputs
+  table_reactive2 <- reactive({
+    merge2 %>% 
+      filter(realm %in% input$pick_realm) 
+  })
+  
+  #output that creates the table
+  output$realm_table = renderDT({
+    datatable(table_reactive2(), style = "bootstrap") %>% 
+      DT::formatStyle(columns = names(merge2), color="lightgray") #column headers, show all rows at once
+  })
   ######################### map panel #########################
   map_stress_reactive <- reactive({
     input$pick_stressor4
