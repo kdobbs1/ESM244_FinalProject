@@ -392,6 +392,13 @@ map_stress_range <- function(species_name, stressor_name) {
 
 ```
 
+
+### make plot
+
+We want to have a base color opacity for the species range equal to the vulnerability, then when it overlaps with stressor the color should scale according to the product of vulernability and stressor amount
+
+It might be best to make a series of raster files to reflect the color options we want. For example, for 1 species, we would need 2 rasters: 1 for stressor area EXCLUDING stressor overlap with species range, then 1 for species range INCLUDING overlap with stressor area. The species range should then be able to range in color from a minimum that reflects the base vulernability and the scaling with stressor exposure.
+
 ```{r}
 stressor_choice <- c('ocean_acidification')
 species_choice <- 'oncorhynchus mykiss'
@@ -403,37 +410,8 @@ map_stress_range(species_name = species_choice, stressor_name = stressor_choice)
 
 
 
-
-### make plot
-
-We want to have a base color opacity for the species range equal to the vulnerability, then when it overlaps with stressor the color should scale according to the product of vulernability and stressor amount
-
-It might be best to make a series of raster files to reflect the color options we want. For example, for 1 species, we would need 2 rasters: 1 for stressor area EXCLUDING stressor overlap with species range, then 1 for species range INCLUDING overlap with stressor area. The species range should then be able to range in color from a minimum that reflects the base vulernability and the scaling with stressor exposure.
-
-First attempt with ggplot (can later maybe attempt with tmap)
-```{r}
-species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>%
-  rename_with(.cols = 3, ~ 'species_stress')
-stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
-  rename_with(.cols = 3, ~ 'stress')
-
-species_stress_map <- ggplot() +
-  geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
-  # scale_color_viridis_c() +
-  scale_fill_gradient(low = 'orange1', high = 'red4') +
-  new_scale_fill() +
-  geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
-  scale_fill_gradient(low = 'cyan1', high = 'blue4') +
-  #scale_color_distiller('stress', palette = "Spectral") +
-  # coord_sf(expand = 0) +
-  # coord_cartesian(xlim = c(-13000000, -8000000), ylim = c(0, 10000000)) +
-  theme_void()
-
-species_stress_map
-
-```
-
 ### Recentering the map to the data
+
 Adapted from: https://stackoverflow.com/questions/10620862/use-different-center-than-the-prime-meridian-in-plotting-a-world-map/10629246#10629246
 ```{r}
 library(sp)
