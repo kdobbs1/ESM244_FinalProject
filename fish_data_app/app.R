@@ -91,12 +91,9 @@ uv_df <- rast(here(data_path, 'stressor_maps', 'uv_radiation_2020.tif')) %>%
 regions_df <- rast(here(data_path, 'spatial', 'meow_rgns_mol.tif')) %>% 
   map_to_df()
 meow<-read_csv(here(data_path, 'spatial', 'meow_rgns.csv')) %>% as.data.frame() %>% dplyr::select(rlm_code, realm, eco_code_x)
-<<<<<<< HEAD
 #merge dfs
 df_list <- list(bycatch_df, eu_df, lp_df, mhw_df, oceana_df, plasticp_df, uv_df, regions_df)
-=======
 
->>>>>>> 22729589135541fa4f3cd9a91fe0428d933607b2
 
 ##### For map
 
