@@ -260,7 +260,7 @@ map_stress_range <- function(species_name, stressor_name) {
   stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
     rename_with(.cols = 3, ~ 'stress')
   species_stress_map <- ggplot() +
-    geom_sf(data = land_v, col = NA, mapping = aes(geometry = geometry), color = 'black', fill = 'seashell1') +
+    geom_sf(data = land_sf, col = NA, mapping = aes(geometry = geometry), color = 'black', fill = 'seashell1') +
     geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
     scale_fill_gradient(low = 'white', high = 'red4') +
     new_scale_fill() +
@@ -683,18 +683,18 @@ server <- function(input, output) {
       DT::formatStyle(columns = names(table_data_1), color="lightgray") #column headers, show all rows at once
   }) 
   ######################### realm stressor panel #########################
-  # 
-  # #reactive function for the table inputs
-  # table_reactive2 <- reactive({
-  #   merge2 %>% 
-  #     filter(realm %in% input$pick_realm) 
-  # })
-  # 
-  # #output that creates the table
-  # output$realm_table = renderDT({
-  #   datatable(table_reactive2(), style = "bootstrap") %>% 
-  #     DT::formatStyle(columns = names(merge2), color="lightgray") #column headers, show all rows at once
-  # })
+
+  #reactive function for the table inputs
+  table_reactive2 <- reactive({
+    merge2 %>%
+      filter(realm %in% input$pick_realm)
+  })
+
+  #output that creates the table
+  output$realm_table = renderDT({
+    datatable(table_reactive2(), style = "bootstrap") %>%
+      DT::formatStyle(columns = names(merge2), color="lightgray") #column headers, show all rows at once
+  })
   ######################### map panel #########################
   map_stress_reactive <- reactive({
     input$pick_stressor4
