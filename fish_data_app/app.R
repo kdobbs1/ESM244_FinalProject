@@ -69,7 +69,9 @@ stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>%
 iucn_meaning<-read_csv(here("fish_data_app/data", "iucn_meaning.csv"))
 #merge fish info with iucn info in order to connect common name to scientific name
 fish_info<-left_join(fish_info, iucn_info, by=c('species'='scientific_name_lower'))
-#regions table stuff
+
+
+##### regions table #####
 bycatch_df <- rast(here(data_path, 'stressor_maps', 'bycatch_benthic_2017.tif')) %>% 
   map_to_df()
 eu_df <- rast(here(data_path, 'stressor_maps', 'nutrient_2020.tif')) %>% 
@@ -89,6 +91,8 @@ uv_df <- rast(here(data_path, 'stressor_maps', 'uv_radiation_2020.tif')) %>%
 regions_df <- rast(here(data_path, 'spatial', 'meow_rgns_mol.tif')) %>% 
   map_to_df()
 meow<-read_csv(here(data_path, 'spatial', 'meow_rgns.csv')) %>% as.data.frame() %>% dplyr::select(rlm_code, realm, eco_code_x)
+
+
 ##### For map
 
 fish_info_map <- read_csv(here(data_path, 'fish_info.csv'))  %>% 
@@ -107,11 +111,10 @@ fish_info_map <- read_csv(here(data_path, 'fish_info.csv'))  %>%
          stressor!="storm_disturbance",
          stressor!="wildlife_strike") 
 
-# for base layer
+##### for base layer
 land_sf <- rnaturalearth::ne_countries(scale = 50, ### start with 110
                                        type = 'countries',
                                        returnclass = 'sf')
-
 
 am_species <- c('chanos chanos', 
                 'gadus morhua', 
