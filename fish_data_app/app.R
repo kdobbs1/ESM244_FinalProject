@@ -286,7 +286,7 @@ ui <- fluidPage(
   navbarPage("Relative Impacts of Stressors on Commercially Viable Fish",
              tabPanel("Info", fluid=TRUE, icon=icon("fish"),
                       sidebarLayout(
-                        sidebarPanel(
+                        sidebarPanel(width = 3,
                           titlePanel(h5("Change these selections to learn about different species and stressors:")),
                           #Select species
                           selectInput(inputId = "pick_species1",
@@ -301,17 +301,21 @@ ui <- fluidPage(
                                         ),
                         
                         mainPanel(h3(strong("Information about the Data")),
-                                  textOutput("info"),
-                                  h3(strong(uiOutput("fish_subheading"))),
+                                  uiOutput("info"),
+                          tabsetPanel(
+                            tabPanel(      
+                                  h6(strong(uiOutput("fish_subheading"))),
                                   textOutput("spp_info_text"), #this text doesn't work
-                                  imageOutput("image"), 
-                                  h3(strong(uiOutput("stressor_subheading"))),
-                                  textOutput("selected_var1"), 
-                                  h3(strong("Data Citation")),
+                                  imageOutput("image")),
+                            tabPanel(
+                                  h6(strong(uiOutput("stressor_subheading"))),
+                                  textOutput("selected_var1")),
+                            tabPanel(
+                                  h6(strong("Data Citation")),
                                   uiOutput("citation"),
                                   uiOutput("iucn_learn"))
-                                  
-                #
+                          )
+                        )
                       )
                     ),
              tabPanel("Ranked Stressors", fluid=TRUE, icon = icon("table"),
@@ -506,16 +510,19 @@ server <- function(input, output) {
                                                   " is defined"), sep=""))
   
   #output with basic info about data that doesn't change
-  output$info<-renderText({
-    paste("This dataset examines the risk of impact 
+  wiki_url <- a("this website", href="https://en.m.wikipedia.org/wiki/List_of_commercially_important_fish_species")
+  output$info<-renderUI({
+    tagList("This dataset examines the risk of impact 
           of different environmental stressors on different marine species by intersecting 
           spatial distributions according to each species' vulnerability to a given stressor
           from 2015 to 2020. This analysis specifically explores the vulnerability of high commercial value
-          marine fish species to different environmental stressors. You can learn more 
+          marine fish species to different environmental stressors. Fish species
+          of high comercial value were defined as marine species that are harvested
+          in excess of 500,000 tons annually according to", wiki_url,". You can learn more 
           about the species and how the stressors were defined by changing the inputs 
           in the panel on the left.")
   })
-
+  
   # #output that creates text with species info
   # #replaced input$pick_species1 with reactive function
   # output$spp_info_text<-renderText({
