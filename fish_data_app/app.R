@@ -108,17 +108,9 @@ fish_info_map <- read_csv(here(data_path, 'fish_info.csv'))  %>%
          stressor!="wildlife_strike") 
 
 # for base layer
-land_v <- rnaturalearth::ne_countries(scale = 50, ### start with 110
-                                      type = 'countries',
-                                      returnclass = 'sf') %>% 
-  vect() %>% 
-  terra::project('epsg:4326')
-
-ocean_rast <- rast(here(data_path, 'spatial', 'ocean_area_mol.tif')) %>% 
-  terra::project('epsg:4326')
-
-land_v_cropped <- land_v %>%
-  crop(ocean_rast)
+land_sf <- rnaturalearth::ne_countries(scale = 50, ### start with 110
+                                       type = 'countries',
+                                       returnclass = 'sf')
 
 
 am_species <- c('chanos chanos', 
@@ -239,13 +231,13 @@ map_stress_range <- function(species_name, stressor_name) {
   # Also change the CRS
   crs_proj <- 'epsg:4326'
   stressor_rast <- rast(here(stressor_tif_path)) %>% 
-  terra::project(crs_proj)
+    terra::project(crs_proj)
   # call helper function to make raster from csv
   species_rast <- map_to_mol(species_range_df,
                              by = 'cell_id',
                              which = species_which,
                              ocean_mask = TRUE) %>% 
-  terra::project(crs_proj)  
+    terra::project(crs_proj)  
   
   # Make separate rasters that are mutually exclusive; for species stress and stressor
   stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the stressor map to where the species range is
@@ -258,6 +250,7 @@ map_stress_range <- function(species_name, stressor_name) {
   stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
     rename_with(.cols = 3, ~ 'stress')
   species_stress_map <- ggplot() +
+    geom_sf(data = land_v, col = NA, mapping = aes(geometry = geometry), color = 'black', fill = 'seashell1') +
     geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
     scale_fill_gradient(low = 'white', high = 'red4') +
     new_scale_fill() +
