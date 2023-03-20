@@ -69,6 +69,26 @@ stressor_info<-read_csv(here("fish_data_app/data", "stressor_info.csv")) %>%
 iucn_meaning<-read_csv(here("fish_data_app/data", "iucn_meaning.csv"))
 #merge fish info with iucn info in order to connect common name to scientific name
 fish_info<-left_join(fish_info, iucn_info, by=c('species'='scientific_name_lower'))
+#regions table stuff
+bycatch_df <- rast(here(data_path, 'stressor_maps', 'bycatch_benthic_2017.tif')) %>% 
+  map_to_df()
+eu_df <- rast(here(data_path, 'stressor_maps', 'nutrient_2020.tif')) %>% 
+  map_to_df()
+lp_df <- rast(here(data_path, 'stressor_maps', 'light_2018.tif')) %>% 
+  map_to_df()
+mhw_df <- rast(here(data_path, 'stressor_maps', 'sst_extremes_2020.tif')) %>% 
+  map_to_df()
+oceana_df <- rast(here(data_path, 'stressor_maps', 'ocean_acidification_2020.tif')) %>% 
+  map_to_df()
+plasticp_df <- rast(here(data_path, 'stressor_maps', 'microplastics_2015.tif')) %>% 
+  map_to_df()
+# sst_df <- rast(here(data_path, 'sst_rise_maps', 'spp_max_temp.tif')) %>% 
+#   map_to_df()
+uv_df <- rast(here(data_path, 'stressor_maps', 'uv_radiation_2020.tif')) %>% 
+  map_to_df()
+regions_df <- rast(here(data_path, 'spatial', 'meow_rgns_mol.tif')) %>% 
+  map_to_df()
+meow<-read_csv(here(data_path, 'spatial', 'meow_rgns.csv')) %>% as.data.frame() %>% dplyr::select(rlm_code, realm, eco_code_x)
 ##### For map
 
 fish_info_map <- read_csv(here(data_path, 'fish_info.csv'))  %>% 
@@ -153,6 +173,7 @@ stressor_tif_dict <- c("air_temp" = "",
                        "uv_radiation" = "uv_radiation_2020",
                        "wildlife_strike" = ""
 )
+
 
 ####################################################################
 ##################### Define mapping function ######################
@@ -361,7 +382,7 @@ ui <- fluidPage(
                         
                       )
                       ),
-             tabPanel("Mapping Vulnerability", fluid=TRUE, icon=icon("globe-americas"), 
+             tabPanel("Chart by Realm", fluid=TRUE, icon=icon("globe-americas"), 
                       sidebarLayout(
                         sidebarPanel (
                                         selectInput(inputId = "pick_stressor4",
@@ -374,11 +395,29 @@ ui <- fluidPage(
                                                 
                         ),
                         
+                        mainPanel (textOutput("OUTPUT"))
+                        
+                        
+                      )
+                      ),
+             tabPanel("Mapping Vulnerability", fluid=TRUE, icon=icon("globe-americas"), 
+                      sidebarLayout(
+                        sidebarPanel (
+                          selectInput(inputId = "pick_stressor4",
+                                      label = "Choose stressor:",
+                                      choices = unique(fish_info_map$stressor),
+                                      selected = 'ocean_acidification'),
+                          selectInput(inputId = "pick_species4",       #need unique inputIds per widget
+                                      label = "Choose Species:",
+                                      choices = unique(fish_info_map$species)),
+                          
+                        ),
+                        
                         mainPanel (textOutput("OUTPUT"), plotOutput('species_stress_map'))
                         
                         
                       )
-                      )
+             )
              
   )
 )
