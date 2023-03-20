@@ -129,7 +129,16 @@ stressor_tif_dict <- c("air_temp" = "",
 
 ```
 
-### Make region limits
+### Regions table stuff
+
+```{r}
+stressor_df <- rast(here(data_path, 'stressor_maps', 'uv_radiation_2020.tif')) %>% 
+  map_to_df()
+
+regions_df <- rast(here(data_path, 'spatial', 'meow_rgns_mol.tif')) %>% 
+  map_to_df()
+```
+
 
 ### Extract stressor and species specific rasters
 
