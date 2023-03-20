@@ -263,7 +263,7 @@ ui <- fluidPage(
                         mainPanel(h3(strong("Information about the Data")),
                                   textOutput("info"),
                                   h3(strong(uiOutput("fish_subheading"))),
-                                  textOutput("species_info_text"), #this text doesn't work
+                                  textOutput("spp_info_text"), #this text doesn't work
                                   imageOutput("image"), 
                                   h3(strong(uiOutput("stressor_subheading"))),
                                   textOutput("selected_var1"), 
@@ -386,7 +386,6 @@ server <- function(input, output) {
       as.list()
   })
       
-
   
   #reactive fxn for IUCN status
   iucn_reactive<- reactive({
@@ -462,27 +461,33 @@ server <- function(input, output) {
 
   # #output that creates text with species info
   # #replaced input$pick_species1 with reactive function
-  # output$species_info_text<-renderText({
+  # output$spp_info_text<-renderText({
   #   paste(sn_reactive(),", also known as ", cm_reactive(), ", has an IUCN status of ",
-  #         iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", sn_reactive(), " is most vulnerable to",
+  #         iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", sn_reactive(), " is most vulnerable to ",
   #         most_impacted_stressor_reactive(), ". This means that if the species was exposed to the same intensity of
   #         all stressors tested, then ", most_impacted_stressor_reactive() , " will have the greatest impact.", sep="")
   # })
   
   ### Seth's attempt for multiple top stressors
-  output$species_info_text<-renderText({
+  output$spp_info_text<-renderText({
     most_impacted_stressor_list <- most_impacted_stressor_reactive()
     if (length(most_impacted_stressor_list$stressor) == 1) {
       paste(sn_reactive(),", also known as ", cm_reactive(), ", has an IUCN status of ",
-          iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", sn_reactive(), " is most vulnerable to ",
-          most_impacted_stressor_list$stressor[1], ". This means that if the species was exposed to the same intensity of
-          all stressors tested, then ", most_impacted_stressor_list$stressor[1], " will have the greatest impact.", sep="")
+          iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", 
+          sn_reactive(), " is most vulnerable to ", most_impacted_stressor_list$stressor[1], 
+          ". This means that if the species was exposed to the same intensity of
+          all stressors tested, then ", most_impacted_stressor_list$stressor[1], 
+          " will have the greatest impact.", sep="")
     }
-    if (length(most_impacted_stressor_list$stressor) == 2) {
+    #if (length(most_impacted_stressor_list$stressor) == 2) {
+    else {
       paste(sn_reactive(),", also known as ", cm_reactive(), ", has an IUCN status of ",
-            iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", sn_reactive(), " is most vulnerable to ",
-            most_impacted_stressor_list$stressor[1], " and ", most_impacted_stressor_list$stressor[2], ". This means that if the species was exposed to the same intensity of
-          all stressors tested, then ", most_impacted_stressor_list$stressor[1], " and ", most_impacted_stressor_list$stressor[2], " will have the greatest impact.", sep="")
+            iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", 
+            sn_reactive(), " is most vulnerable to ", most_impacted_stressor_list$stressor[1], 
+            " and ", most_impacted_stressor_list$stressor[2], ". This means that if the 
+            species was exposed to the same intensity of all stressors tested, then ", 
+            most_impacted_stressor_list$stressor[1], " and ", most_impacted_stressor_list$stressor[2], 
+            " will have the greatest impact.", sep="")
     }
   })
   
@@ -492,7 +497,6 @@ server <- function(input, output) {
     })
   
   #reactive to produce file path of images
-  #this works
   pic_reactive <- reactive({
     iucn_info %>% 
       filter(scientific_name_lower %in% input$pick_species1) %>% 
