@@ -387,7 +387,7 @@ ui <- fluidPage(
                       ),
              tabPanel("Stressor by Realm", fluid=TRUE, icon=icon("location-dot"),
                       sidebarLayout(
-                        sidebarPanel(selectInput(inputId = "pick_realm",       #need unique inputIds per widget
+                        sidebarPanel(radioButtons(inputId = "pick_realm",       #need unique inputIds per widget
                                                            label = "Choose Realm:",
                                                            choices = unique(merge2$realm)
                                                  ),
@@ -695,13 +695,35 @@ server <- function(input, output) {
     merge2 %>%
       filter(realm %in% input$pick_realm) %>% 
       select(-realm) %>% 
+      #dplyr::rename("bycatch_benthic_2017"="bycatch") %>% 
       pivot_longer(cols=bycatch_benthic_2017:uv_radiation_2020,names_to = "stressor", 
                    values_to = "vulnerability") %>% 
       arrange(desc(vulnerability))%>%                   # Using dplyr functions
+      mutate(stressor = recode(stressor, bycatch_benthic_2017 = 'bycatch', 
+                             ocean_acidification_2020 = 'ocean acidification', 
+                             uv_radiation_2020 = 'UV radiation',
+                             sst_extremes_2020 ='marine heat waves',
+                             light_2018='light pollution',
+                             microplastics_2015='microplastic pollution',
+                             nutrient_2020 ='eutrophication')) %>% 
       dplyr::mutate_if(is.numeric,
-                round,
-                digits = 4)
+                       round,
+                       digits = 4)
   })
+  
+  # #reactive function for the table inputs
+  # table_reactive2 <- reactive({
+  #   merge2 %>%
+  #     filter(realm %in% input$pick_realm) %>% 
+  #     select(-realm) %>% 
+  #     pivot_longer(cols=bycatch_benthic_2017:uv_radiation_2020,names_to = "stressor", 
+  #                  values_to = "vulnerability") %>% 
+  #     arrange(desc(vulnerability))%>%                   # Using dplyr functions
+  #     #dplyr::rename("bycatch_benthic_2017"="bycatch") %>% 
+  #     dplyr::mutate_if(is.numeric,
+  #               round,
+  #               digits = 4)
+  # })
 
   #output that creates the table
   output$realm_table = renderDT({
