@@ -268,7 +268,9 @@ ui <- fluidPage(
                                   h3(strong(uiOutput("stressor_subheading"))),
                                   textOutput("selected_var1"), 
                                   h3(strong("Data Citation")),
-                                  textOutput("citation"))
+                                  uiOutput("citation"),
+                                  uiOutput("iucn_learn"))
+                                  
                 #
                       )
                     ),
@@ -520,10 +522,14 @@ server <- function(input, output) {
          )
   }, deleteFile = F)
   
-  output$citation<-renderText({
-    paste("Data collected fom: O’Hara, C., Frazier, M., Valle, M., Butt, N., Kaschner, K., Klein, C.,
-          & Halpern, B. *Cumulative human impacts on global marine fauna highlight risk to
-          fragile functional diversity of marine ecosystems* [Unpublished manuscript]")
+  output$citation<-renderUI(HTML(paste("Data collected fom: O’Hara, C., Frazier, M., Valle, M., Butt, N., Kaschner, K., Klein, C.,
+          & Halpern, B.", em("Cumulative human impacts on global marine fauna highlight risk to
+          fragile functional diversity of marine ecosystems "), " [Unpublished manuscript]")
+  ))
+  
+  IUCN_url <- a("IUCN Homepage", href="https://www.iucnredlist.org/")
+  output$iucn_learn <- renderUI({
+    tagList("Learn more about IUCN statuses here:", IUCN_url)
   })
 
 ##################### plotting panel ####################### 
