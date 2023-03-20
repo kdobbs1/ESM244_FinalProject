@@ -16,6 +16,8 @@ library(sf)
 library(mapproj)
 library(maptools)
 library(ggnewscale)
+library(rnaturalearth)
+
 
 
 ################# Setting paths
@@ -84,6 +86,20 @@ fish_info_map <- read_csv(here(data_path, 'fish_info.csv'))  %>%
          stressor!="sedimentation",
          stressor!="storm_disturbance",
          stressor!="wildlife_strike") 
+
+# for base layer
+land_v <- rnaturalearth::ne_countries(scale = 50, ### start with 110
+                                      type = 'countries',
+                                      returnclass = 'sf') %>% 
+  vect() %>% 
+  terra::project('epsg:4326')
+
+ocean_rast <- rast(here(data_path, 'spatial', 'ocean_area_mol.tif')) %>% 
+  terra::project('epsg:4326')
+
+land_v_cropped <- land_v %>%
+  crop(ocean_rast)
+
 
 am_species <- c('chanos chanos', 
                 'gadus morhua', 
@@ -350,7 +366,8 @@ ui <- fluidPage(
                         sidebarPanel (
                                         selectInput(inputId = "pick_stressor4",
                                                     label = "Choose stressor:",
-                                                    choices = unique(fish_info_map$stressor)),
+                                                    choices = unique(fish_info_map$stressor),
+                                                    selected = 'ocean_acidification'),
                                         selectInput(inputId = "pick_species4",       #need unique inputIds per widget
                                                            label = "Choose Species:",
                                                            choices = unique(fish_info_map$species)),
