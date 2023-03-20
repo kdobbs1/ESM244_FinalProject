@@ -394,7 +394,7 @@ ui <- fluidPage(
 
                         ),
 
-                        mainPanel(DTOutput('realm_table'))
+                        mainPanel(textOutput("stress_realm_title"), DTOutput('realm_table'))
 
 
                       )
@@ -684,16 +684,29 @@ server <- function(input, output) {
   }) 
   ######################### realm stressor panel #########################
 
+  #output that makes a reactive chart title
+  output$stress_realm_title<-renderText(paste("Average Vulnerability Score Per 
+                                              Stressor in the ",input$pick_realm, sep=""))
+  #dataframe containing correct column names
+  column_names<-c("stressor", "vulnerability")
+  
   #reactive function for the table inputs
   table_reactive2 <- reactive({
     merge2 %>%
-      filter(realm %in% input$pick_realm)
+      filter(realm %in% input$pick_realm) %>% 
+      select(-realm) %>% 
+      pivot_longer(cols=bycatch_benthic_2017:uv_radiation_2020,names_to = "stressor", 
+                   values_to = "vulnerability") %>% 
+      arrange(desc(vulnerability))%>%                   # Using dplyr functions
+      dplyr::mutate_if(is.numeric,
+                round,
+                digits = 4)
   })
 
   #output that creates the table
   output$realm_table = renderDT({
     datatable(table_reactive2(), style = "bootstrap") %>%
-      DT::formatStyle(columns = names(merge2), color="lightgray") #column headers, show all rows at once
+      DT::formatStyle(columns = names(column_names), color="lightgray") #column headers, show all rows at once
   })
   ######################### map panel #########################
   map_stress_reactive <- reactive({
