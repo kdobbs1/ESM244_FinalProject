@@ -177,13 +177,25 @@ merge2<-dplyr::full_join(merge, meow, by = c("meow_rgns_mol"="eco_code_x")) %>%
 ### Define region limits in list of lists
 ```{r}
 # items are region name, globe rotate T/F, longitude lower, longitude upper, latitude lower, latitude upper
-pacific_nw <- c('Northwest Pacific', T, , , 0, 90)
-pacific_ne <- c('Northeast Pacific', T, , , 0, 90)
-pacific_sw <- c('Southwest Pacific', T, , , -90, 0)
-pacific_se <- c('Southeast Pacific', T, , , -90, 0)
+pacific_nw <- c('Northwest Pacific', T, -180, , 0, 65)
+pacific_ne <- c('Northeast Pacific', T, -180, , 0, 65)
+pacific_sw <- c('Southwest Pacific', T, , , -65, 0)
+pacific_se <- c('Southeast Pacific', T, , , -65, 0)
+indian <- c('Indian', F, , , , )
+atlantic_nw <- c('Northwest Atlantic', F, , , ,)
+atlantic_ne <- c('Northeast Atlantic', F, , , ,)
+atlantic_sw <- c('Southwest Atlantic', F, , , ,)
+atlantic_se <- c('Southeast Atlantic', F, , , ,)
 
 regions_list <- c(pacific_nw = pacific_nw, 
                   pacific_ne = pacific_ne, 
+                  pacific_sw = pacific_sw,
+                  pacific_se = pacific_se,
+                  indian = indian,
+                  atlantic_nw = atlantic_nw,
+                  atlantic_ne = atlantic_ne,
+                  atlantic_sw = atlantic_sw,
+                  atlantic_se = atlantic_se
                   )
 ```
 
