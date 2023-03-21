@@ -177,9 +177,10 @@ merge2<-dplyr::full_join(merge, meow, by = c("meow_rgns_mol"="eco_code_x")) %>%
 ### Define region limits in list of lists
 ```{r}
 # items are region name, globe rotate T/F, longitude lower, longitude upper, latitude lower, latitude upper
-pacific_nw <- c('Northwest Pacific', T, , , , )
-pacific_ne 
-pacific_sw
+pacific_nw <- c('Northwest Pacific', T, , , 0, 90)
+pacific_ne <- c('Northeast Pacific', T, , , 0, 90)
+pacific_sw <- c('Southwest Pacific', T, , , -90, 0)
+pacific_se <- c('Southeast Pacific', T, , , -90, 0)
 
 regions_list <- c(pacific_nw = pacific_nw, 
                   pacific_ne = pacific_ne, 
