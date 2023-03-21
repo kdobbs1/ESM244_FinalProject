@@ -432,12 +432,8 @@ ui <- fluidPage(
              tabPanel("Mapping Vulnerability", fluid=TRUE, icon=icon("globe-americas"), 
                       sidebarLayout(
                         sidebarPanel(width = 3,
-                          selectInput(inputId = "pick_stressor4",
-                                      label = "Choose stressor:",
-                                      choices = unique(fish_info_map$stressor),
-                                      selected = 'ocean_acidification'),
                           selectInput(inputId = "pick_species4",       #need unique inputIds per widget
-                                      label = "Choose Species:",
+                                      label = "Choose species:",
                                       #choices = unique(fish_info_map$species)
                                       choices = c("Gulf menhaden"="brevoortia patronus",
                                                   "Milkfish"="chanos chanos",
@@ -456,6 +452,10 @@ ui <- fluidPage(
                                                   "Yellowfin tuna"="thunnus albacares",
                                                   "Largehead hairtail"="trichiurus lepturus"
                                       )),
+                          selectInput(inputId = "pick_stressor4",
+                                      label = "Choose stressor:",
+                                      choices = unique(fish_info_map$stressor),
+                                      selected = 'ocean_acidification'),
                           
                         ),
                         
