@@ -432,9 +432,9 @@ if (rotate_globe == T) {
 }
 
 ##### make dataframes out of the rasters
-species_stress_df <- as.data.frame(x = product_rast_rotated, xy = TRUE) %>%
+species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>%
   rename_with(.cols = 3, ~ 'species_stress')
-stressor_df <- as.data.frame(x = inverse_product_rast_rotated, xy = TRUE) %>%
+stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
   rename_with(.cols = 3, ~ 'stress')
 
 # ggplot() + geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress))
