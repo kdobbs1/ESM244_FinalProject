@@ -350,8 +350,12 @@ map_raw
 stressor_choice <- c('ocean_acidification')
 species_choice <- 'engraulis japonicus'
 
-# initialize and set region rotate
+# initialize and set region variables
 rotate_globe <- F
+long_lower <- -90
+long_upper <- 0
+lat_lower <- 0
+lat_upper <- 30
 
 # format inputs for feeding to file chains
 species_choice_formatted <- sub(' ', '_', tolower(species_choice))
@@ -421,10 +425,11 @@ stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the s
 product_rast <- stressor_intersect * species_rast                   # calculate species stress
 inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)
 
-##### Rotate data if necessary for selected region
-long_shift <- 0
-product_rast_rotated <- product_rast %>% terra::rotate()
-inverse_product_rast_rotated <- inverse_product_rast %>% terra::rotate()
+##### Rotate raster data if necessary for selected region
+if (rotate_globe == T) {
+  product_rast <- product_rast %>% terra::rotate()
+  inverse_product <- inverse_product_rast %>% terra::rotate()
+}
 
 ##### make dataframes out of the rasters
 species_stress_df <- as.data.frame(x = product_rast_rotated, xy = TRUE) %>%
@@ -436,7 +441,7 @@ stressor_df <- as.data.frame(x = inverse_product_rast_rotated, xy = TRUE) %>%
 
 ######### Actually make the plot ##########
 # two cases for whether the inverted globe is needed
-if (invert_globe == T) {
+if (rotate_globe == T) {
   species_stress_map <- land_sf_plot_rotated +
   geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
   scale_fill_gradient(low = 'white', high = 'red4') +
@@ -445,6 +450,7 @@ if (invert_globe == T) {
   scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
   theme(panel.grid.major = element_blank(),
       panel.grid.minor = element_blank()) +
+  coord_sf(xlim = c(long_lower, long_upper), ylim = c(lat_lower, lat_upper), expand = F) +
   theme_minimal()
 } else {
   species_stress_map <- land_sf_plot +
@@ -455,6 +461,7 @@ if (invert_globe == T) {
   scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
   theme(panel.grid.major = element_blank(),
       panel.grid.minor = element_blank()) +
+  coord_sf(xlim = c(long_lower, long_upper), ylim = c(lat_lower, lat_upper), expand = F) +
   theme_minimal()
 }
 
