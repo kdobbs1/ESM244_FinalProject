@@ -180,7 +180,7 @@ pacific_nw <- list(name = 'Northwest Pacific', rotate = T, lon_low = -80, lon_up
 pacific_ne <- list(name = 'Northeast Pacific', rotate = T, lon_low = -10, lon_up = 80, lat_low = 0, lat_up = 65)
 pacific_sw <- list(name = 'Southwest Pacific', rotate = T, lon_low = -80, lon_up = 10, lat_low = -65, lat_up = 0)
 pacific_se <- list(name = 'Southeast Pacific', rotate = T, lon_low = -10, lon_up = 80, lat_low = -65, lat_up = 0)
-indian <- list(name = 'Indian', rotate = F, lon_low = 10, lon_up = 120, lat_low = -70, lat_up = 0)
+indian <- list(name = 'Indian', rotate = F, lon_low = 10, lon_up = 120, lat_low = -70, lat_up = 30)
 atlantic_n <- list(name = 'North Atlantic', rotate = F, lon_low = -40, lon_up = 20, lat_low = 0, lat_up = 65)
 atlantic_s <- list(name = 'South Atlantic', rotate = F, lon_low = -30, lon_up = 40, lat_low = -65, lat_up = 0)
 
@@ -195,6 +195,22 @@ regions_list <- list(world = world,
 )
 
 ################ for base layer ##############
+crs_proj <- 'epsg:4326'
+
+sample_rast <- rast(here(data_path, 'stressor_maps', 'uv_radiation_2020.tif')) %>% 
+  terra::project(crs_proj)
+sample_rast_rotated <- sample_rast %>% terra::rotate()
+
+
+land_sf <- rnaturalearth::ne_countries(scale = 50, ### start with 110
+                                       type = 'countries',
+                                       returnclass = 'sf')
+land_sf_crs <- land_sf %>% st_as_sf(crs = 4326)
+
+land_rast <- land_sf_crs %>% vect() %>% rasterize(sample_rast)
+land_rast_rotated <- land_sf_crs %>% vect() %>% terra::rotate(split = T) %>% rasterize(sample_rast_rotated)
+ext(land_rast_rotated) <- ext(-180, 180, -89.9401853248781, 90)
+
 land_df <- as.data.frame(x = land_rast, xy = TRUE) %>%
   rename_with(.cols = 3, ~ 'land')
 land_rotated_df <- as.data.frame(x = land_rast_rotated, xy = TRUE) %>%
@@ -781,6 +797,10 @@ server <- function(input, output) {
   )
   
 ####################### summary table panel #####################
+  
+  #dataframe containing correct column names
+  column_names<-c("stressor", "vulnerability")
+  
   cm_plot_reactive_table<- reactive({
     fish_info %>% 
       filter(species %in% input$pick_species2) %>% 
@@ -824,15 +844,13 @@ server <- function(input, output) {
   #output that creates the table
   output$table = renderDT({
     datatable(table_reactive(), style = "bootstrap") %>% 
-      DT::formatStyle(columns = names(table_data_1), color="lightgray") #column headers, show all rows at once
+      DT::formatStyle(columns = names(column_names), color="lightgray") #column headers, show all rows at once
   }) 
   ######################### realm stressor panel #########################
 
   #output that makes a reactive chart title
   output$stress_realm_title<-renderText(paste("Average Vulnerability Score Per 
                                               Stressor in the ",input$pick_realm, sep=""))
-  #dataframe containing correct column names
-  column_names<-c("stressor", "vulnerability")
   
   #reactive function for the table inputs
   table_reactive2 <- reactive({
@@ -888,7 +906,13 @@ server <- function(input, output) {
     input$pick_region
   })
   
-  output$map_title<-renderUI(HTML(paste("Global stress vulnerability of ", input$pick_stressor4, " to ", em(input$pick_species4), sep = "")))
+  map_stressor_clean_reactive <- reactive({
+    return(str_replace_all(input$pick_stressor4, pattern = "_", replacement = " "))
+  })
+  
+  output$map_title<-renderUI(HTML(paste("Global stress vulnerability of ", map_stressor_clean_reactive(), " to ", em(input$pick_species4), sep = "")))
+  
+
   
   ####### Process data for map #######
   
