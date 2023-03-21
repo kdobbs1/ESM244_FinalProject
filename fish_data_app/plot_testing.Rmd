@@ -177,6 +177,7 @@ merge2<-dplyr::full_join(merge, meow, by = c("meow_rgns_mol"="eco_code_x")) %>%
 ### Define region limits in list of lists
 ```{r}
 # items are region name, globe rotate T/F, longitude lower, longitude upper, latitude lower, latitude upper
+world <- c('World', F, -180, 180, -89.94, 90)
 pacific_nw <- c('Northwest Pacific', T, -180, , 0, 65)
 pacific_ne <- c('Northeast Pacific', T, -180, , 0, 65)
 pacific_sw <- c('Southwest Pacific', T, , , -65, 0)
@@ -204,22 +205,56 @@ regions_list <- c(pacific_nw = pacific_nw,
 ### base layer
 
 ```{r}
+
+crs_proj <- 'epsg:4326'
+
+sample_rast <- rast(here(data_path, 'stressor_maps', 'uv_radiation_2020.tif')) %>% 
+  terra::project(crs_proj)
+sample_rast_rotated <- sample_rast %>% terra::rotate()
+
+
 land_sf <- rnaturalearth::ne_countries(scale = 50, ### start with 110
                                        type = 'countries',
                                        returnclass = 'sf')
 land_sf_crs <- land_sf %>% st_as_sf(crs = 4326)
 
-land_sf_vect <- land_sf_crs %>%  vect()
-land_sf_rotated <- land_sf_crs %>% vect() %>% terra::rotate()
+land_rast <- land_sf_crs %>% vect() %>% rasterize(sample_rast)
+land_rast_rotated <- land_sf_crs %>% vect() %>% terra::rotate(split = T) %>% rasterize(sample_rast_rotated)
+ext(land_rast_rotated) <- ext(-180, 180, -89.9401853248781, 90)
+
+
 ```
+```{r}
+
+plot(land_rast_rotated)
+
+```
+
 
 ### preload ggplot
 ```{r}
+land_df <- as.data.frame(x = land_rast, xy = TRUE) %>%
+  rename_with(.cols = 3, ~ 'land')
+land_rotated_df <- as.data.frame(x = land_rast_rotated, xy = TRUE) %>%
+  rename_with(.cols = 3, ~ 'land')
+
 land_sf_plot <- ggplot() +
-    geom_spatvector(data = land_sf_vect, col = NA, color = 'black', fill = 'seashell1')
+    geom_tile(data = land_df, aes(x = x, y = y, fill = land, )) + 
+    scale_fill_gradientn(breaks = c(0,1),
+                       colors = c('seashell1', 'seashell1'),
+                       guide = 'none') +
+    new_scale_fill()
 
 land_sf_plot_rotated <- ggplot() +
-    geom_spatvector(data = land_sf_rotated, col = NA, color = 'black', fill = 'seashell1')
+    geom_tile(data = land_rotated_df, aes(x = x, y = y, fill = land)) + 
+    scale_fill_gradientn(breaks = c(0,1),
+                       colors = c('seashell1', 'seashell1'),
+                       guide = 'none') +
+    new_scale_fill()
+```
+
+```{r}
+land_sf_plot_rotated
 ```
 
 
@@ -352,10 +387,10 @@ species_choice <- 'engraulis japonicus'
 
 # initialize and set region variables
 rotate_globe <- T
-long_lower <- -90
-long_upper <- 0
-lat_lower <- 0
-lat_upper <- 60
+long_lower <- -180
+long_upper <- 180
+lat_lower <- -89.94
+lat_upper <- 90
 
 # format inputs for feeding to file chains
 species_choice_formatted <- sub(' ', '_', tolower(species_choice))
@@ -410,7 +445,6 @@ species_vuln <- fish_info_map %>%
 
 ##### Generate rasters for stressor and species range
 # Also change the CRS
-crs_proj <- 'epsg:4326'
 stressor_rast <- rast(here(stressor_tif_path)) %>% 
   terra::project(crs_proj)
 # call helper function to make raster from csv
@@ -422,13 +456,15 @@ species_rast <- map_to_mol(species_range_df,
 
 # Make separate rasters that are mutually exclusive; for species stress and stressor
 stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the stressor map to where the species range is
-product_rast <- stressor_intersect * species_rast                   # calculate species stress
+product_rast <- stressor_intersect * species_rast              # calculate species stress
 inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)
 
 ##### Rotate raster data if necessary for selected region
 if (rotate_globe == T) {
   product_rast <- product_rast %>% terra::rotate()
-  inverse_product <- inverse_product_rast %>% terra::rotate()
+  ext(product_rast) <- c(-180, 180, -89.9401853248781, 90)
+  inverse_product_rast <- inverse_product_rast %>% terra::rotate()
+  ext(inverse_product_rast) <- c(-180, 180, -89.9401853248781, 90)
 }
 
 ##### make dataframes out of the rasters
@@ -468,7 +504,19 @@ if (rotate_globe == T) {
 
 species_stress_map
 ```
+```{r}
+ggplot() + geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress))
+```
 
+```{r}
+land_sf_plot_rotated
+
+```
+
+```{r}
+plot(product_rast)
+
+```
 
 
 
