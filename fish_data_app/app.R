@@ -541,15 +541,15 @@ ui <- fluidPage(
                                       selected = 'ocean_acidification'),
                           selectInput(inputId = "pick_region",
                                       label = "Choose region:",
-                                      choices = c("Northwest Pacific"="bycatch",
-                                                  "eutrophication nutrient pollution"="eutrophication_nutrient_pollution",
-                                                  "light pollution"="light_pollution",
-                                                  "marine heat waves"="marine_heat_waves",
-                                                  "ocean acdification"="ocean_acidification",
-                                                  "plastic pollution microplastic"="plastic_pollution_microplastic",
-                                                  "sst rise"="sst_rise",
-                                                  "uv_radiation"="uv_radiation"),
-                                      selected = 'ocean_acidification'),
+                                      choices = c("World"="world",
+                                                  "Northwest Pacific"="pacific_nw",
+                                                  "Northeast Pacific"="pacific_ne",
+                                                  "Southwest Pacific"="pacific_sw",
+                                                  "Southeast Pacific"="pacific_se",
+                                                  "Indian"="indian",
+                                                  "North Atlantic"="atlantic_n",
+                                                  "South Atlantic"="atlantic_s"),
+                                      selected = 'World'),
                           
                         ),
                         
@@ -883,6 +883,9 @@ server <- function(input, output) {
   map_species_reactive <- reactive({
     input$pick_species4
   })
+  map_region_reactive <- reactive({
+    input$pick_region
+  })
   
   output$map_title<-renderUI(HTML(paste("Global Distribution of Vulnerability Score of ", input$pick_stressor4, " and ", em(input$pick_species4), sep = "")))
   
@@ -890,7 +893,7 @@ server <- function(input, output) {
   
   output$species_stress_map = renderPlot({
     
-    map_stress_range(species_name = map_species_reactive(), stressor_name = map_stress_reactive())
+    map_stress_range(species_name = map_species_reactive(), stressor_name = map_stress_reactive(), region_name = map_region_reactive())
   
   })
   
