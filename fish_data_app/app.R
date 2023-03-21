@@ -291,7 +291,23 @@ ui <- fluidPage(
                           #Select species
                           selectInput(inputId = "pick_species1",
                                                 label = "Choose species:",
-                                                choices = unique(fish_info$species), 
+                                                #choices = unique(fish_info$species), 
+                                                choices = c("Gulf menhaden"="brevoortia patronus",
+                                                  "Milkfish"="chanos chanos",
+                                                  "Atlantic herring"="clupea harengus",
+                                                  "Japanese anchovy"="engraulis japonicus",
+                                                  "Peruvian anchoveta"="engraulis ringens",
+                                                  "Atlantic cod"="gadus morhua",
+                                                  "Skipjack tuna"="katsuwonus pelamis",
+                                                  "Capelin"="mallotus villosus",
+                                                  "Rainbow trout"="oncorhynchus mykiss",
+                                                  "Atlantic salmon"="salmo salar",
+                                                  "European pilchard"="sardina pilchardus",
+                                                  "Indian oil sardine"="sardinella longiceps",
+                                                  "Chub mackerel"="scomber japonicus",
+                                                  "Atlantic mackerel"="scomber scombrus",
+                                                  "Yellowfin tuna"="thunnus albacares",
+                                                  "Largehead hairtail"="trichiurus lepturus"),
                                                 selected = "oncorhynchus mykiss"),
                           #Select stressor
                           selectInput(inputId = "pick_stressor1",
@@ -304,14 +320,14 @@ ui <- fluidPage(
                                   uiOutput("info"),
                           tabsetPanel(
                             tabPanel(      
-                                  h6(strong(uiOutput("fish_subheading"))),
-                                  textOutput("spp_info_text"), #this text doesn't work
+                                  h5(strong(uiOutput("fish_subheading"))),
+                                  uiOutput("spp_info_text"), #this text doesn't work
                                   imageOutput("image")),
                             tabPanel(
-                                  h6(strong(uiOutput("stressor_subheading"))),
+                                  h5(strong(textOutput("stressor_subheading"))),
                                   textOutput("selected_var1")),
                             tabPanel(
-                                  h6(strong("Data Citation")),
+                                  h5(strong("Data Sources")),
                                   uiOutput("citation"),
                                   uiOutput("iucn_learn"))
                           )
@@ -321,7 +337,7 @@ ui <- fluidPage(
              tabPanel("Ranked Stressors", fluid=TRUE, icon = icon("table"),
                       #icon=icon("", lib = "font-awesome"),
                       sidebarLayout(
-                        sidebarPanel(
+                        sidebarPanel(width = 3,
                           #select species
                           radioButtons(inputId = "pick_species2",
                                              label = "Choose species:",
@@ -357,7 +373,8 @@ ui <- fluidPage(
                       ),
              tabPanel("Vulnerability Chart", fluid=TRUE, icon = icon("chart-column"), 
                       sidebarLayout(
-                        sidebarPanel(selectInput(inputId = "pick_species3",
+                        sidebarPanel(width = 3,
+                          selectInput(inputId = "pick_species3",
                                                   label = "Choose species:",
                                                   #choices = unique(fish_info$species), 
                                                   choices = c("Gulf menhaden"="brevoortia patronus",
@@ -391,7 +408,8 @@ ui <- fluidPage(
                       ),
              tabPanel("Stressor by Realm", fluid=TRUE, icon=icon("location-dot"),
                       sidebarLayout(
-                        sidebarPanel(radioButtons(inputId = "pick_realm",       #need unique inputIds per widget
+                        sidebarPanel(width = 3,
+                          radioButtons(inputId = "pick_realm",       #need unique inputIds per widget
                                                            label = "Choose Realm:",
                                                            choices = unique(merge2$realm)
                                                  ),
@@ -405,7 +423,7 @@ ui <- fluidPage(
                       ),
              tabPanel("Mapping Vulnerability", fluid=TRUE, icon=icon("globe-americas"), 
                       sidebarLayout(
-                        sidebarPanel(
+                        sidebarPanel(width = 3,
                           selectInput(inputId = "pick_stressor4",
                                       label = "Choose stressor:",
                                       choices = unique(fish_info_map$stressor),
@@ -506,8 +524,7 @@ server <- function(input, output) {
                                           em(sci_name_reactive_info()), ")"), sep=""))
   
   #output that makes a reactive heading telling us more about how stressors are defined
-  output$stressor_subheading<-renderUI(HTML(paste("Discover how each stressor", input$pick_stressor_1,
-                                                  " is defined"), sep=""))
+  output$stressor_subheading<-renderText(paste("Defining", input$pick_stressor1), sep="")
   
   #output with basic info about data that doesn't change
   wiki_url <- a("this website", href="https://en.m.wikipedia.org/wiki/List_of_commercially_important_fish_species")
@@ -533,25 +550,25 @@ server <- function(input, output) {
   # })
   
   ### Seth's attempt for multiple top stressors
-  output$spp_info_text<-renderText({
+  output$spp_info_text<-renderUI({
     most_impacted_stressor_list <- most_impacted_stressor_reactive()
     if (length(most_impacted_stressor_list$stressor) == 1) {
-      paste(sn_reactive(),", also known as ", cm_reactive(), ", has an IUCN status of ",
+      HTML(paste(em(sn_reactive()),", also known as ", cm_reactive(), ", has an IUCN status of ",
           iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", 
-          sn_reactive(), " is most vulnerable to ", most_impacted_stressor_list$stressor[1], 
+          em(sn_reactive()), " is most vulnerable to ", most_impacted_stressor_list$stressor[1], 
           ". This means that if the species was exposed to the same intensity of
           all stressors tested, then ", most_impacted_stressor_list$stressor[1], 
-          " will have the greatest impact.", sep="")
+          " will have the greatest impact.", sep=""))
     }
     #if (length(most_impacted_stressor_list$stressor) == 2) {
     else {
-      paste(sn_reactive(),", also known as ", cm_reactive(), ", has an IUCN status of ",
+      HTML(paste(em(sn_reactive()),", also known as ", cm_reactive(), ", has an IUCN status of ",
             iucn_reactive(),". ",iucn_meaning_reactive()," Of the stressors tested, ", 
-            sn_reactive(), " is most vulnerable to ", most_impacted_stressor_list$stressor[1], 
+            em(sn_reactive()), " is most vulnerable to ", most_impacted_stressor_list$stressor[1], 
             " and ", most_impacted_stressor_list$stressor[2], ". This means that if the 
             species was exposed to the same intensity of all stressors tested, then ", 
             most_impacted_stressor_list$stressor[1], " and ", most_impacted_stressor_list$stressor[2], 
-            " will have the greatest impact.", sep="")
+            " will have the greatest impact.", sep=""))
     }
   })
   
@@ -661,8 +678,8 @@ server <- function(input, output) {
   })
   
   #output that makes a reactive chart title
-  output$chart_title<-renderUI(HTML(paste("Top Ten Stressors that ", cm_plot_reactive_table()," (",
-                                         em(sci_name_reactive_table()), ") is Vulnerable to"), sep=""))
+  output$chart_title<-renderUI(HTML(paste("Stressors that ", cm_plot_reactive_table()," (",
+                                         em(sci_name_reactive_table()), ") is Vulnerable to Ranked"), sep=""))
   
   # #chart title
   # output$chart_title<-renderText({
