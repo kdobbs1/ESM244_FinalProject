@@ -337,7 +337,7 @@ map_stress_range <- function(species_name, stressor_name, region_name) {
       scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
       theme(panel.grid.major = element_blank(),
             panel.grid.minor = element_blank()) +
-      theme_minimal()
+      theme_void()
   }
   
   species_stress_map_final <- species_stress_map +
@@ -525,8 +525,9 @@ ui <- fluidPage(
                                                   "Chub mackerel"="scomber japonicus",
                                                   "Atlantic mackerel"="scomber scombrus",
                                                   "Yellowfin tuna"="thunnus albacares",
-                                                  "Largehead hairtail"="trichiurus lepturus"
-                                      )),
+                                                  "Largehead hairtail"="trichiurus lepturus"),
+                                      selected = 'Rainbow trout'
+                                      ),
                           selectInput(inputId = "pick_stressor4",
                                       label = "Choose stressor:",
                                       #choices = unique(fish_info_map$stressor),
@@ -537,7 +538,7 @@ ui <- fluidPage(
                                                   "ocean acdification"="ocean_acidification",
                                                   "plastic pollution microplastic"="plastic_pollution_microplastic",
                                                   "sst rise"="sst_rise",
-                                                  "uv_radiation"="uv_radiation"),
+                                                  "UV radiation"="uv_radiation"),
                                       selected = 'ocean_acidification'),
                           selectInput(inputId = "pick_region",
                                       label = "Choose region:",
@@ -887,7 +888,7 @@ server <- function(input, output) {
     input$pick_region
   })
   
-  output$map_title<-renderUI(HTML(paste("Global Distribution of Vulnerability Score of ", input$pick_stressor4, " and ", em(input$pick_species4), sep = "")))
+  output$map_title<-renderUI(HTML(paste("Global stress vulnerability of ", input$pick_stressor4, " to ", em(input$pick_species4), sep = "")))
   
   ####### Process data for map #######
   
