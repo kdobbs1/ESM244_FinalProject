@@ -416,11 +416,15 @@ ui <- fluidPage(
 
                         ),
 
-                        mainPanel(textOutput("stress_realm_title"), 
-                                  DTOutput('realm_table'), 
+                        mainPanel(
+                          tabsetPanel(
+                            tabPanel(
+                                  h5(textOutput("stress_realm_title")), 
+                                  DTOutput('realm_table')),
+                          tabPanel(h5("Map of Realms"),
+                                  imageOutput("realm_pic"),
                                   textOutput('realm_citation')
-                                  #, imageOutput("realm_pic")
-                                  )
+                                  )))
 
 
                       )
@@ -740,14 +744,13 @@ server <- function(input, output) {
   })
   
   #output for picture showing
-  # output$realm_pic<- renderImage({
-  #   list(#src = pic_file(),
-  #        src = "www/realms.png", #how I know this should work
-  #        width = "60%",
-  #        height = 350,
-  #        style="display: block; margin-left: auto; margin-right: auto;"
-  #   )
-  # }, deleteFile = F)
+  output$realm_pic<- renderImage({
+    list( src = "www/realms.png", #how I know this should work
+         width = "80%",
+         height = 380,
+         style="display: block; margin-left: auto; margin-right: auto;"
+    )
+  }, deleteFile = F)
   
   output$realm_citation<-renderText(paste(
   "This map shows the areas that each realm encompasses and taken from: 
