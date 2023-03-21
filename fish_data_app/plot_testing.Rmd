@@ -177,26 +177,23 @@ merge2<-dplyr::full_join(merge, meow, by = c("meow_rgns_mol"="eco_code_x")) %>%
 ### Define region limits in list of lists
 ```{r}
 # items are region name, globe rotate T/F, longitude lower, longitude upper, latitude lower, latitude upper
-world <- c('World', F, -180, 180, -89.94, 90)
-pacific_nw <- c('Northwest Pacific', T, -180, , 0, 65)
-pacific_ne <- c('Northeast Pacific', T, -180, , 0, 65)
-pacific_sw <- c('Southwest Pacific', T, , , -65, 0)
-pacific_se <- c('Southeast Pacific', T, , , -65, 0)
-indian <- c('Indian', F, , , , )
-atlantic_nw <- c('Northwest Atlantic', F, , , ,)
-atlantic_ne <- c('Northeast Atlantic', F, , , ,)
-atlantic_sw <- c('Southwest Atlantic', F, , , ,)
-atlantic_se <- c('Southeast Atlantic', F, , , ,)
+world <- list(name = 'World', rotate = F, lon_low = -180, lon_up = 180, lat_low = -89.94, lat_up = 90)
+pacific_nw <- list(name = 'Northwest Pacific', rotate = T, lon_low = -80, lon_up = 10, lat_low = 0, lat_up = 65)
+pacific_ne <- list(name = 'Northeast Pacific', rotate = T, lon_low = -10, lon_up = 80, lat_low = 0, lat_up = 65)
+pacific_sw <- list(name = 'Southwest Pacific', rotate = T, lon_low = -80, lon_up = 10, lat_low = -65, lat_up = 0)
+pacific_se <- list(name = 'Southeast Pacific', rotate = T, lon_low = -10, lon_up = 80, lat_low = -65, lat_up = 0)
+indian <- list(name = 'Indian', rotate = F, lon_low = 10, lon_up = 120, lat_low = -70, lat_up = 0)
+atlantic_n <- list(name = 'North Atlantic', rotate = F, lon_low = -40, lon_up = 20, lat_low = 0, lat_up = 65)
+atlantic_s <- list(name = 'South Atlantic', rotate = F, lon_low = -30, lon_up = 40, lat_low = -65, lat_up = 0)
 
-regions_list <- c(pacific_nw = pacific_nw, 
+regions_list <- list(world = world,
+                  pacific_nw = pacific_nw, 
                   pacific_ne = pacific_ne, 
                   pacific_sw = pacific_sw,
                   pacific_se = pacific_se,
                   indian = indian,
-                  atlantic_nw = atlantic_nw,
-                  atlantic_ne = atlantic_ne,
-                  atlantic_sw = atlantic_sw,
-                  atlantic_se = atlantic_se
+                  atlantic_n = atlantic_n,
+                  atlantic_s = atlantic_s
                   )
 ```
 
@@ -251,10 +248,19 @@ land_sf_plot_rotated <- ggplot() +
 
 Make rasters with function named map_stress_range
 ```{r}
-map_stress_range <- function(species_name, stressor_name) {
+map_stress_range <- function(species_name, stressor_name, region_name) {
   
   stressor_choice <- c(stressor_name)
   species_choice <- species_name
+  region_choice <- region_name
+  
+  # initialize and set region variables
+  extracted_region <- regions_list[[region_choice]]
+  rotate_globe <- extracted_region$rotate
+  long_lower <- extracted_region$lon_low
+  long_upper <- extracted_region$lon_up
+  lat_lower <- extracted_region$lat_low
+  lat_upper <- extracted_region$lat_up
   
   # format inputs for feeding to file chains
   species_choice_formatted <- sub(' ', '_', tolower(species_choice))
@@ -309,7 +315,6 @@ map_stress_range <- function(species_name, stressor_name) {
   
   ##### Generate rasters for stressor and species range
   # Also change the CRS
-  crs_proj <- 'epsg:4326'
   stressor_rast <- rast(here(stressor_tif_path)) %>% 
     terra::project(crs_proj)
   # call helper function to make raster from csv
@@ -321,35 +326,53 @@ map_stress_range <- function(species_name, stressor_name) {
   
   # Make separate rasters that are mutually exclusive; for species stress and stressor
   stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the stressor map to where the species range is
-  product_rast <- stressor_intersect * species_rast                   # calculate species stress
+  product_rast <- stressor_intersect * species_rast              # calculate species stress
   inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)
   
-  ##### Rotate data if necessary for selected region
-  long_shift <- 0
-  land_sf_rotated <- land_sf_crs %>% vect() %>% rotate(., longitude = long_shift, split = T, left = F, normalize = T)
-  product_rast_rotated <- product_rast %>% rotate(., longitude = long_shift, split = T, left = F, normalize = T)
-  inverse_product_rast_rotated <- inverse_product_rast %>% rotate(., longitude = long_shift, split = T, left = F, normalize = T)
+  ##### Rotate raster data if necessary for selected region
+  if (rotate_globe == T) {
+    product_rast <- product_rast %>% terra::rotate()
+    ext(product_rast) <- c(-180, 180, -89.9401853248781, 90)
+    inverse_product_rast <- inverse_product_rast %>% terra::rotate()
+    ext(inverse_product_rast) <- c(-180, 180, -89.9401853248781, 90)
+  }
   
-  ######### Actually make the plot ##########
-  species_stress_df <- as.data.frame(x = product_rast_rotated, xy = TRUE) %>%
+  ##### make dataframes out of the rasters
+  species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>%
     rename_with(.cols = 3, ~ 'species_stress')
-  stressor_df <- as.data.frame(x = inverse_product_rast_rotated, xy = TRUE) %>%
+  stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
     rename_with(.cols = 3, ~ 'stress')
   
-  if (rotate_globe == T) 
-  species_stress_map <- ggplot() +
-    geom_spatvector(data = land_sf_rotated, col = NA, color = 'black', fill = 'seashell1') +
+  # ggplot() + geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress))
+  
+  ######### Actually make the plot ##########
+  # two cases for whether the inverted globe is needed
+  if (rotate_globe == T) {
+    species_stress_map <- land_sf_plot_rotated +
     geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
     scale_fill_gradient(low = 'white', high = 'red4') +
     new_scale_fill() +
     geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
     scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
-    coord_sf(xlim = c(-90, 270)) +
     theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
     theme_minimal()
+  } else {
+    species_stress_map <- land_sf_plot +
+    geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
+    scale_fill_gradient(low = 'white', high = 'red4') +
+    new_scale_fill() +
+    geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+    scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
+    theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+    theme_minimal()
+  }
   
-  return(species_stress_map)
+  species_stress_map_final <- species_stress_map +
+    coord_sf(xlim = c(long_lower, long_upper), ylim = c(lat_lower, lat_upper), expand = F)
+    
+  return(species_stress_map_final)
 }
 
 ```
@@ -361,17 +384,23 @@ We want to have a base color opacity for the species range equal to the vulnerab
 
 It might be best to make a series of raster files to reflect the color options we want. For example, for 1 species, we would need 2 rasters: 1 for stressor area EXCLUDING stressor overlap with species range, then 1 for species range INCLUDING overlap with stressor area. The species range should then be able to range in color from a minimum that reflects the base vulernability and the scaling with stressor exposure.
 
+```{r}
+map_stress_range('engraulis japonicus', 'ocean_acidification', 'pacific_nw')
+```
+
 
 ```{r}
 stressor_choice <- c('ocean_acidification')
 species_choice <- 'engraulis japonicus'
+region_choice <- 'world'
 
 # initialize and set region variables
-rotate_globe <- T
-long_lower <- -180
-long_upper <- 180
-lat_lower <- -89.94
-lat_upper <- 90
+extracted_region <- regions_list[[region_choice]]
+rotate_globe <- extracted_region$rotate
+long_lower <- extracted_region$lon_low
+long_upper <- extracted_region$lon_up
+lat_lower <- extracted_region$lat_low
+lat_upper <- extracted_region$lat_up
 
 # format inputs for feeding to file chains
 species_choice_formatted <- sub(' ', '_', tolower(species_choice))
@@ -467,7 +496,6 @@ if (rotate_globe == T) {
   scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
   theme(panel.grid.major = element_blank(),
       panel.grid.minor = element_blank()) +
-  coord_sf(xlim = c(long_lower, long_upper), ylim = c(lat_lower, lat_upper), expand = F) +
   theme_minimal()
 } else {
   species_stress_map <- land_sf_plot +
@@ -478,37 +506,17 @@ if (rotate_globe == T) {
   scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
   theme(panel.grid.major = element_blank(),
       panel.grid.minor = element_blank()) +
-  coord_sf(xlim = c(long_lower, long_upper), ylim = c(lat_lower, lat_upper), expand = F) +
   theme_minimal()
 }
 
+species_stress_map_final <- species_stress_map +
+  coord_sf(xlim = c(long_lower, long_upper), ylim = c(lat_lower, lat_upper), expand = F)
 
-species_stress_map
-```
-```{r}
-ggplot() + geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress))
-```
 
-```{r}
-land_sf_plot_rotated
 
+species_stress_map_final
 ```
 
-```{r}
-plot(product_rast)
-
-```
-
-
-
-### Recentering the map to the data
-
-```{r}
-land_sf_90_offset <- land_sf %>% vect() %>% rotate(., long = 0, split = T, left = F, normalize = T)
-
-ggplot() +
-  geom_spatvector(data = land_sf_90_offset, col = NA, color = 'black', fill = 'seashell1')
-```
 
 
 

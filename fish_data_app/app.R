@@ -118,10 +118,7 @@ fish_info_map <- read_csv(here(data_path, 'fish_info.csv'))  %>%
          stressor!="storm_disturbance",
          stressor!="wildlife_strike") 
 
-##### for base layer
-land_sf <- rnaturalearth::ne_countries(scale = 50, ### start with 110
-                                       type = 'countries',
-                                       returnclass = 'sf')
+
 
 am_species <- c('chanos chanos', 
                 'gadus morhua', 
@@ -176,15 +173,65 @@ stressor_tif_dict <- c("air_temp" = "",
                        "wildlife_strike" = ""
 )
 
+################ regions ##################
+# items are region name, globe rotate T/F, longitude lower, longitude upper, latitude lower, latitude upper
+world <- list(name = 'World', rotate = F, lon_low = -180, lon_up = 180, lat_low = -89.94, lat_up = 90)
+pacific_nw <- list(name = 'Northwest Pacific', rotate = T, lon_low = -80, lon_up = 10, lat_low = 0, lat_up = 65)
+pacific_ne <- list(name = 'Northeast Pacific', rotate = T, lon_low = -10, lon_up = 80, lat_low = 0, lat_up = 65)
+pacific_sw <- list(name = 'Southwest Pacific', rotate = T, lon_low = -80, lon_up = 10, lat_low = -65, lat_up = 0)
+pacific_se <- list(name = 'Southeast Pacific', rotate = T, lon_low = -10, lon_up = 80, lat_low = -65, lat_up = 0)
+indian <- list(name = 'Indian', rotate = F, lon_low = 10, lon_up = 120, lat_low = -70, lat_up = 0)
+atlantic_n <- list(name = 'North Atlantic', rotate = F, lon_low = -40, lon_up = 20, lat_low = 0, lat_up = 65)
+atlantic_s <- list(name = 'South Atlantic', rotate = F, lon_low = -30, lon_up = 40, lat_low = -65, lat_up = 0)
+
+regions_list <- list(world = world,
+                     pacific_nw = pacific_nw, 
+                     pacific_ne = pacific_ne, 
+                     pacific_sw = pacific_sw,
+                     pacific_se = pacific_se,
+                     indian = indian,
+                     atlantic_n = atlantic_n,
+                     atlantic_s = atlantic_s
+)
+
+################ for base layer ##############
+land_df <- as.data.frame(x = land_rast, xy = TRUE) %>%
+  rename_with(.cols = 3, ~ 'land')
+land_rotated_df <- as.data.frame(x = land_rast_rotated, xy = TRUE) %>%
+  rename_with(.cols = 3, ~ 'land')
+
+land_sf_plot <- ggplot() +
+  geom_tile(data = land_df, aes(x = x, y = y, fill = land, )) + 
+  scale_fill_gradientn(breaks = c(0,1),
+                       colors = c('seashell1', 'seashell1'),
+                       guide = 'none') +
+  new_scale_fill()
+
+land_sf_plot_rotated <- ggplot() +
+  geom_tile(data = land_rotated_df, aes(x = x, y = y, fill = land)) + 
+  scale_fill_gradientn(breaks = c(0,1),
+                       colors = c('seashell1', 'seashell1'),
+                       guide = 'none') +
+  new_scale_fill()
+
 
 ####################################################################
 ##################### Define mapping function ######################
 ####################################################################
 
-map_stress_range <- function(species_name, stressor_name) {
+map_stress_range <- function(species_name, stressor_name, region_name) {
   
   stressor_choice <- c(stressor_name)
   species_choice <- species_name
+  region_choice <- region_name
+  
+  # initialize and set region variables
+  extracted_region <- regions_list[[region_choice]]
+  rotate_globe <- extracted_region$rotate
+  long_lower <- extracted_region$lon_low
+  long_upper <- extracted_region$lon_up
+  lat_lower <- extracted_region$lat_low
+  lat_upper <- extracted_region$lat_up
   
   # format inputs for feeding to file chains
   species_choice_formatted <- sub(' ', '_', tolower(species_choice))
@@ -232,14 +279,13 @@ map_stress_range <- function(species_name, stressor_name) {
     species_which <- 'prob'
   }
   
-  ##### Capture species vulnerability to the chosen stressor
+  ##### Capture species vulernability to the chosen stressor
   species_vuln <- fish_info_map %>% 
     filter(species == species_choice, stressor == stressor_choice) %>% 
     pull(vuln)
   
   ##### Generate rasters for stressor and species range
   # Also change the CRS
-  crs_proj <- 'epsg:4326'
   stressor_rast <- rast(here(stressor_tif_path)) %>% 
     terra::project(crs_proj)
   # call helper function to make raster from csv
@@ -251,24 +297,53 @@ map_stress_range <- function(species_name, stressor_name) {
   
   # Make separate rasters that are mutually exclusive; for species stress and stressor
   stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the stressor map to where the species range is
-  product_rast <- stressor_intersect * species_rast                   # calculate species stress
+  product_rast <- stressor_intersect * species_rast              # calculate species stress
   inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)
   
-  ######### Actually make the plot ##########
+  ##### Rotate raster data if necessary for selected region
+  if (rotate_globe == T) {
+    product_rast <- product_rast %>% terra::rotate()
+    ext(product_rast) <- c(-180, 180, -89.9401853248781, 90)
+    inverse_product_rast <- inverse_product_rast %>% terra::rotate()
+    ext(inverse_product_rast) <- c(-180, 180, -89.9401853248781, 90)
+  }
+  
+  ##### make dataframes out of the rasters
   species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>%
     rename_with(.cols = 3, ~ 'species_stress')
   stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
     rename_with(.cols = 3, ~ 'stress')
-  species_stress_map <- ggplot() +
-    geom_sf(data = land_sf, col = NA, mapping = aes(geometry = geometry), color = 'black', fill = 'seashell1') +
-    geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
-    scale_fill_gradient(low = 'white', high = 'red4') +
-    new_scale_fill() +
-    geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
-    scale_fill_gradient(low = 'white', high = 'blue4') +
-    theme_void()
   
-  return(species_stress_map)
+  # ggplot() + geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress))
+  
+  ######### Actually make the plot ##########
+  # two cases for whether the inverted globe is needed
+  if (rotate_globe == T) {
+    species_stress_map <- land_sf_plot_rotated +
+      geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
+      scale_fill_gradient(low = 'white', high = 'red4') +
+      new_scale_fill() +
+      geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+      scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
+      theme(panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank()) +
+      theme_minimal()
+  } else {
+    species_stress_map <- land_sf_plot +
+      geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
+      scale_fill_gradient(low = 'white', high = 'red4') +
+      new_scale_fill() +
+      geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+      scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
+      theme(panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank()) +
+      theme_minimal()
+  }
+  
+  species_stress_map_final <- species_stress_map +
+    coord_sf(xlim = c(long_lower, long_upper), ylim = c(lat_lower, lat_upper), expand = F)
+  
+  return(species_stress_map_final)
 }
 
 
@@ -456,6 +531,17 @@ ui <- fluidPage(
                                       label = "Choose stressor:",
                                       #choices = unique(fish_info_map$stressor),
                                       choices = c("bycatch"="bycatch",
+                                                  "eutrophication nutrient pollution"="eutrophication_nutrient_pollution",
+                                                  "light pollution"="light_pollution",
+                                                  "marine heat waves"="marine_heat_waves",
+                                                  "ocean acdification"="ocean_acidification",
+                                                  "plastic pollution microplastic"="plastic_pollution_microplastic",
+                                                  "sst rise"="sst_rise",
+                                                  "uv_radiation"="uv_radiation"),
+                                      selected = 'ocean_acidification'),
+                          selectInput(inputId = "pick_region",
+                                      label = "Choose region:",
+                                      choices = c("Northwest Pacific"="bycatch",
                                                   "eutrophication nutrient pollution"="eutrophication_nutrient_pollution",
                                                   "light pollution"="light_pollution",
                                                   "marine heat waves"="marine_heat_waves",
