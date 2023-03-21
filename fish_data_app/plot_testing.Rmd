@@ -184,6 +184,8 @@ land_sf <- rnaturalearth::ne_countries(scale = 50, ### start with 110
                                        returnclass = 'sf')
 land_sf_crs <- land_sf %>% st_as_sf(crs = 4326)
 
+land_sf_vect <- land_sf_crs %>%  vect()
+land_sf_rotated <- land_sf_crs %>% vect() %>% terra::rotate()
 ```
 
 
