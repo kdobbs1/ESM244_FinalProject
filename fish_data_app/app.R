@@ -416,7 +416,11 @@ ui <- fluidPage(
 
                         ),
 
-                        mainPanel(textOutput("stress_realm_title"), DTOutput('realm_table'))
+                        mainPanel(textOutput("stress_realm_title"), 
+                                  DTOutput('realm_table'), 
+                                  textOutput('realm_citation')
+                                  #, imageOutput("realm_pic")
+                                  )
 
 
                       )
@@ -735,19 +739,23 @@ server <- function(input, output) {
                        digits = 4)
   })
   
-  # #reactive function for the table inputs
-  # table_reactive2 <- reactive({
-  #   merge2 %>%
-  #     filter(realm %in% input$pick_realm) %>% 
-  #     select(-realm) %>% 
-  #     pivot_longer(cols=bycatch_benthic_2017:uv_radiation_2020,names_to = "stressor", 
-  #                  values_to = "vulnerability") %>% 
-  #     arrange(desc(vulnerability))%>%                   # Using dplyr functions
-  #     #dplyr::rename("bycatch_benthic_2017"="bycatch") %>% 
-  #     dplyr::mutate_if(is.numeric,
-  #               round,
-  #               digits = 4)
-  # })
+  #output for picture showing
+  # output$realm_pic<- renderImage({
+  #   list(#src = pic_file(),
+  #        src = "www/realms.png", #how I know this should work
+  #        width = "60%",
+  #        height = 350,
+  #        style="display: block; margin-left: auto; margin-right: auto;"
+  #   )
+  # }, deleteFile = F)
+  
+  output$realm_citation<-renderText(paste(
+  "This map shows the areas that each realm encompasses and taken from: 
+  Spalding, M., Fox, H., Allen, G., Davidson, N., Ferdaña, Z., Finlayson, M., 
+  Halpern, B., Jorge, M., Lombana, A., Lourie, S., Martin, K., McManus, E., 
+  Molnar, J., Recchia, C., & Robertson, J. (2007). Marine Ecoregions of the World: 
+    A Bioregionalization of Coastal and Shelf Areas. BioScience, 57, 573–583. 
+  https://doi.org/10.1641/B570707"))
 
   #output that creates the table
   output$realm_table = renderDT({
