@@ -551,7 +551,7 @@ ui <- fluidPage(
                                                   "eutrophication nutrient pollution"="eutrophication_nutrient_pollution",
                                                   "light pollution"="light_pollution",
                                                   "marine heat waves"="marine_heat_waves",
-                                                  "ocean acdification"="ocean_acidification",
+                                                  "ocean acidification"="ocean_acidification",
                                                   "plastic pollution microplastic"="plastic_pollution_microplastic",
                                                   "sst rise"="sst_rise",
                                                   "UV radiation"="uv_radiation"),
