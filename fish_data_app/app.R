@@ -316,7 +316,7 @@ ui <- fluidPage(
                                                 selected="biomass_removal")
                                         ),
                         
-                        mainPanel(h3(strong("Information about the Data")),
+                        mainPanel(h3(strong("Background")),
                                   uiOutput("info"),
                           tabsetPanel(
                             tabPanel(      
@@ -438,11 +438,28 @@ ui <- fluidPage(
                                       selected = 'ocean_acidification'),
                           selectInput(inputId = "pick_species4",       #need unique inputIds per widget
                                       label = "Choose Species:",
-                                      choices = unique(fish_info_map$species)),
+                                      #choices = unique(fish_info_map$species)
+                                      choices = c("Gulf menhaden"="brevoortia patronus",
+                                                  "Milkfish"="chanos chanos",
+                                                  "Atlantic herring"="clupea harengus",
+                                                  "Japanese anchovy"="engraulis japonicus",
+                                                  "Peruvian anchoveta"="engraulis ringens",
+                                                  "Atlantic cod"="gadus morhua",
+                                                  "Skipjack tuna"="katsuwonus pelamis",
+                                                  "Capelin"="mallotus villosus",
+                                                  "Rainbow trout"="oncorhynchus mykiss",
+                                                  "Atlantic salmon"="salmo salar",
+                                                  "European pilchard"="sardina pilchardus",
+                                                  "Indian oil sardine"="sardinella longiceps",
+                                                  "Chub mackerel"="scomber japonicus",
+                                                  "Atlantic mackerel"="scomber scombrus",
+                                                  "Yellowfin tuna"="thunnus albacares",
+                                                  "Largehead hairtail"="trichiurus lepturus"
+                                      )),
                           
                         ),
                         
-                        mainPanel(textOutput("OUTPUT"), plotOutput('species_stress_map'))
+                        mainPanel(uiOutput('map_title'), plotOutput('species_stress_map'))
                         
                         
                       )
@@ -772,6 +789,8 @@ server <- function(input, output) {
   map_species_reactive <- reactive({
     input$pick_species4
   })
+  
+  output$map_title<-renderUI(HTML(paste("Global Distribution of Vulnerability Score of ", input$pick_stressor4, " and ", em(input$pick_species4), sep = "")))
   
   ####### Process data for map #######
   
