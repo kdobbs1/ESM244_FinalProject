@@ -11,13 +11,14 @@ knitr::opts_chunk$set(echo = TRUE)
 library(raster)
 library(tidyverse)
 library(terra)
-# library(tidyterra)        # for mapping terra rasters
+library(tidyterra)        # for mapping terra rasters
 library(sf)
 library(tmap)
 #library(mapproj)
 library(maptools)
 library(ggnewscale)
 library(here)
+library(maps)
 ```
 
 
@@ -34,10 +35,6 @@ source(here(data_path, 'helper_fxns.R'))
 
 ```{r}
 fish_info <- read_csv(here(data_path, 'fish_info.csv'))
-
-rgns_geog <- read_csv(here(data_path, 'spatial', 'meow_rgns.csv'))
-rgn_names_ohi <- read_csv(here(data_path, 'spatial', 'rgn_names_ohi.csv'))
-rgns_geog_raster <- raster(here(data_path, 'spatial', 'meow_rgns_mol.tif'))
 
 fish_info_map <- read_csv(here(data_path, 'fish_info.csv'))  %>% 
   filter(stressor!="air_temp",
@@ -178,12 +175,6 @@ merge2<-dplyr::full_join(merge, meow, by = c("meow_rgns_mol"="eco_code_x")) %>%
   summarize(across(.cols=bycatch_benthic_2017:uv_radiation_2020, .fns=mean))
 ```
 
-```{r}
-regions_df[is.na(regions_df)] <- 0
-
-max(regions_df$meow_rgns_mol)
-```
-
 
 ### base layer
 
@@ -191,112 +182,10 @@ max(regions_df$meow_rgns_mol)
 land_sf <- rnaturalearth::ne_countries(scale = 50, ### start with 110
                                        type = 'countries',
                                        returnclass = 'sf')
-```
-
-
-### Extract stressor and species specific rasters
-
-```{r, message = FALSE}
-# 
-# region_choice <- 1
-# stressor_choice <- c('biomass_removal')
-# species_choice <- 'oncorhynchus mykiss'
-# 
-# # format inputs for feeding to file chains
-# species_choice_formatted <- sub(' ', '_', tolower(species_choice))
-# species_name_file <- species_choice_formatted
-# 
-# # set source depending on species
-# src <- ''
-# if (species_choice %in% am_species) {
-#   src <- 'am'
-# }
-# if (species_choice %in% iucn_species) {
-#   src <- 'iucn'
-#   species_name_file <- iucn_species_dict[species_choice]
-# }
-# 
-# 
-# 
-# ##### format STRESSOR file names for calls according to choice
-# 
-# # initialize path and name variables
-# stressor_tif_name <- ''
-# stressor_tif_path_addition <- ''
-# stressor_tif_path <- ''
-# 
-# # add to path and name for sea surface temperature maps
-# if (stressor_choice == "sst_rise") {
-#   
-#   sst_tif_prefix <- '_spp_max_temp_'
-#   stressor_tif_path_addition <- 'sst_rise_maps'
-#   
-#   stressor_tif_name <- paste(src, sst_tif_prefix, species_name_file, sep = '')
-#   stressor_tif_path_addition <- 'sst_rise_maps'
-#   
-# } else {                                    # for all other files, refer to the dictionary
-#   
-#   stressor_tif_name <- stressor_tif_dict[stressor_choice]
-#   stressor_tif_path_addition <- 'stressor_maps'
-# 
-# }
-# 
-# stressor_tif_folder <- paste(data_path, '/', stressor_tif_path_addition, sep = '')
-# stressor_tif_path <- paste(stressor_tif_folder, '/', stressor_tif_name, '.tif', sep = '')
-# 
-# 
-# 
-# ##### Format SPECIES range file name for calls
-# 
-# species_range_file <- paste(src, '_spp_mol_', species_name_file, sep = '')
-# species_range_csv_path <- paste(data_path, '/species_ranges/', species_range_file, '.csv', sep = '')
-# 
-# species_range_df = read_csv(here(species_range_csv_path))
-# 
-# # csv processing depends on the data source
-# if (src == 'iucn') {
-#   species_which <- 'presence'
-# } else {          # for src == 'am'
-#   species_range_df <- species_range_df %>% 
-#     filter(prob >= 0.5) %>% 
-#     drop_na()
-#   species_which <- 'prob'
-# }
-# 
-# 
-# 
-# ##### Capture species vulernability to the chosen stressor
-# 
-# species_vuln <- fish_info %>% 
-#   filter(species == species_choice, stressor == stressor_choice) %>% 
-#   pull(vuln)
-# 
-# 
-# 
-# ##### Generate rasters for stressor and species range
-# # Also change the CRS
-# crs_proj <- 'epsg:4326'
-# 
-# stressor_rast <- rast(here(stressor_tif_path)) %>% 
-#   terra::project(crs_proj)
-# 
-# 
-# 
-# # call helper function to make raster from csv
-# species_rast <- map_to_mol(species_range_df,
-#                            by = 'cell_id',
-#                            which = species_which,
-#                            ocean_mask = TRUE) %>% 
-#   terra::project(crs_proj)  
-# 
-# 
-# # Make separate rasters that are mutually exclusive; for species stress and stressor
-# stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the stressor map to where the species range is
-# product_rast <- stressor_intersect * species_rast                   # calculate species stress
-# inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)    # make map of stressor that excludes species stress
-
+land_sf_crs <- land_sf %>% st_as_sf(crs = 4326)
 
 ```
+
 
 Make rasters with function named map_stress_range
 ```{r}
@@ -373,18 +262,27 @@ map_stress_range <- function(species_name, stressor_name) {
   product_rast <- stressor_intersect * species_rast                   # calculate species stress
   inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)
   
+  ##### Rotate data if necessary for selected region
+  long_shift <- 0
+  land_sf_rotated <- land_sf_crs %>% vect() %>% rotate(., longitude = long_shift, split = T, left = F, normalize = T)
+  product_rast_rotated <- product_rast %>% rotate(., longitude = long_shift, split = T, left = F, normalize = T)
+  inverse_product_rast_rotated <- inverse_product_rast %>% rotate(., longitude = long_shift, split = T, left = F, normalize = T)
+  
   ######### Actually make the plot ##########
-  species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>%
+  species_stress_df <- as.data.frame(x = product_rast_rotated, xy = TRUE) %>%
     rename_with(.cols = 3, ~ 'species_stress')
-  stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
+  stressor_df <- as.data.frame(x = inverse_product_rast_rotated, xy = TRUE) %>%
     rename_with(.cols = 3, ~ 'stress')
   species_stress_map <- ggplot() +
-    geom_sf(data = land_v, col = NA, mapping = aes(geometry = geometry), color = 'black', fill = 'seashell1') +
+    geom_spatvector(data = land_sf_rotated, col = NA, color = 'black', fill = 'seashell1') +
     geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
     scale_fill_gradient(low = 'white', high = 'red4') +
     new_scale_fill() +
     geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
     scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
+    coord_sf(xlim = c(-90, 270)) +
+    theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
     theme_minimal()
   
   return(species_stress_map)
@@ -401,10 +299,113 @@ It might be best to make a series of raster files to reflect the color options w
 
 ```{r}
 stressor_choice <- c('ocean_acidification')
-species_choice <- 'oncorhynchus mykiss'
+species_choice <- 'engraulis japonicus'
 
-map_stress_range(species_name = species_choice, stressor_name = stressor_choice)
+map_raw <- map_stress_range(species_name = species_choice, stressor_name = stressor_choice)
 
+map_raw
+```
+
+
+```{r}
+stressor_choice <- c('ocean_acidification')
+species_choice <- 'engraulis japonicus'
+
+# format inputs for feeding to file chains
+species_choice_formatted <- sub(' ', '_', tolower(species_choice))
+species_name_file <- species_choice_formatted
+# set source depending on species
+src <- ''
+if (species_choice %in% am_species) {
+  src <- 'am'
+}
+if (species_choice %in% iucn_species) {
+  src <- 'iucn'
+  species_name_file <- iucn_species_dict[species_choice]
+}
+
+##### format STRESSOR file names for calls according to choice
+# initialize path and name variables
+stressor_tif_name <- ''
+stressor_tif_path_addition <- ''
+stressor_tif_path <- ''
+# add to path and name for sea surface temperature maps
+if (stressor_choice == "sst_rise") {
+  sst_tif_prefix <- '_spp_max_temp_'
+  stressor_tif_path_addition <- 'sst_rise_maps'
+  stressor_tif_name <- paste(src, sst_tif_prefix, species_name_file, sep = '')
+  stressor_tif_path_addition <- 'sst_rise_maps'
+} else {                                    # for all other files, refer to the dictionary
+  stressor_tif_name <- stressor_tif_dict[stressor_choice]
+  stressor_tif_path_addition <- 'stressor_maps'
+}
+
+stressor_tif_folder <- paste(data_path, '/', stressor_tif_path_addition, sep = '')
+stressor_tif_path <- paste(stressor_tif_folder, '/', stressor_tif_name, '.tif', sep = '')
+
+##### Format SPECIES range file name for calls
+species_range_file <- paste(src, '_spp_mol_', species_name_file, sep = '')
+species_range_csv_path <- paste(data_path, '/species_ranges/', species_range_file, '.csv', sep = '')
+species_range_df = read_csv(here(species_range_csv_path))
+# csv processing depends on the data source
+if (src == 'iucn') {
+  species_which <- 'presence'
+} else {          # for src == 'am'
+  species_range_df <- species_range_df %>% 
+    filter(prob >= 0.5) %>% 
+    drop_na()
+  species_which <- 'prob'
+}
+
+##### Capture species vulernability to the chosen stressor
+species_vuln <- fish_info_map %>% 
+  filter(species == species_choice, stressor == stressor_choice) %>% 
+  pull(vuln)
+
+##### Generate rasters for stressor and species range
+# Also change the CRS
+crs_proj <- 'epsg:4326'
+stressor_rast <- rast(here(stressor_tif_path)) %>% 
+  terra::project(crs_proj)
+# call helper function to make raster from csv
+species_rast <- map_to_mol(species_range_df,
+                           by = 'cell_id',
+                           which = species_which,
+                           ocean_mask = TRUE) %>% 
+  terra::project(crs_proj)  
+
+# Make separate rasters that are mutually exclusive; for species stress and stressor
+stressor_intersect <- terra::mask(stressor_rast, species_rast)      # crop the stressor map to where the species range is
+product_rast <- stressor_intersect * species_rast                   # calculate species stress
+inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)
+
+##### Rotate data if necessary for selected region
+long_shift <- 0
+land_sf_rotated <- land_sf_crs %>% vect() %>% terra::rotate()
+product_rast_rotated <- product_rast %>% terra::rotate()
+inverse_product_rast_rotated <- inverse_product_rast %>% terra::rotate()
+
+##### make dataframes out of the rasters
+species_stress_df <- as.data.frame(x = product_rast_rotated, xy = TRUE) %>%
+  rename_with(.cols = 3, ~ 'species_stress')
+stressor_df <- as.data.frame(x = inverse_product_rast_rotated, xy = TRUE) %>%
+  rename_with(.cols = 3, ~ 'stress')
+
+# ggplot() + geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress))
+
+######### Actually make the plot ##########
+species_stress_map <- ggplot() +
+  geom_spatvector(data = land_sf_rotated, col = NA, color = 'black', fill = 'seashell1') +
+  geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
+  scale_fill_gradient(low = 'white', high = 'red4') +
+  new_scale_fill() +
+  geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+  scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
+  theme(panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()) +
+  theme_minimal()
+
+species_stress_map
 ```
 
 
@@ -412,77 +413,16 @@ map_stress_range(species_name = species_choice, stressor_name = stressor_choice)
 
 ### Recentering the map to the data
 
-Adapted from: https://stackoverflow.com/questions/10620862/use-different-center-than-the-prime-meridian-in-plotting-a-world-map/10629246#10629246
 ```{r}
-library(sp)
-library(maps)
-library(maptools)   ## map2SpatialLines(), pruneMap()
-library(rgdal)      ## CRS(), spTransform()
-library(rgeos)      ## readWKT(), gIntersects(), gBuffer(), gDifference() 
+land_sf_90_offset <- land_sf %>% vect() %>% rotate(., long = 0, split = T, left = F, normalize = T)
 
-## Convert a "maps" map to a "SpatialLines" map
-makeSLmap <- function() {
-    llCRS <- CRS("+proj=longlat +ellps=WGS84")
-    wrld <- map("world", interior = FALSE, plot=FALSE,
-            xlim = c(-179, 179), ylim = c(-89, 89))
-    wrld_p <- pruneMap(wrld, xlim = c(-179, 179))
-    map2SpatialLines(wrld_p, proj4string = llCRS)
-}
-
-## Clip SpatialLines neatly along the antipodal meridian
-sliceAtAntipodes <- function(SLmap, lon_0) {
-    ## Preliminaries
-    long_180 <- (lon_0 %% 360) - 180
-    llCRS  <- CRS("+proj=longlat +ellps=WGS84")  ## CRS of 'maps' objects
-    eqcCRS <- CRS("+proj=eqc")
-    ## Reproject the map into Equidistant Cylindrical/Plate Caree projection 
-    SLmap <- spTransform(SLmap, eqcCRS)
-    ## Make a narrow SpatialPolygon along the meridian opposite lon_0
-    L  <- Lines(Line(cbind(long_180, c(-89, 89))), ID="cutter")
-    SL <- SpatialLines(list(L), proj4string = llCRS)
-    SP <- gBuffer(spTransform(SL, eqcCRS), 10, byid = TRUE)
-    ## Use it to clip any SpatialLines segments that it crosses
-    ii <- which(gIntersects(SLmap, SP, byid=TRUE))
-    # Replace offending lines with split versions
-    # (but skip when there are no intersections (as, e.g., when lon_0 = 0))
-    if(length(ii)) { 
-        SPii <- gDifference(SLmap[ii], SP, byid=TRUE)
-        SLmap <- rbind(SLmap[-ii], SPii)  
-    }
-    return(SLmap)
-}
-
-## re-center, and clean up remaining streaks
-recenterAndClean <- function(SLmap, lon_0) {
-    llCRS <- CRS("+proj=longlat +ellps=WGS84")  ## map package's CRS
-    newCRS <- CRS(paste("+proj=eqc +lon_0=", lon_0, sep=""))
-    ## Recenter 
-    SLmap <- spTransform(SLmap, newCRS)
-    ## identify remaining 'scratch-lines' by searching for lines that
-    ## cross 2 of 3 lines of longitude, spaced 120 degrees apart
-    v1 <-spTransform(readWKT("LINESTRING(-62 -89, -62 89)", p4s=llCRS), newCRS)
-    v2 <-spTransform(readWKT("LINESTRING(58 -89, 58 89)",   p4s=llCRS), newCRS)
-    v3 <-spTransform(readWKT("LINESTRING(178 -89, 178 89)", p4s=llCRS), newCRS)
-    ii <- which((gIntersects(v1, SLmap, byid=TRUE) +
-                 gIntersects(v2, SLmap, byid=TRUE) +
-                 gIntersects(v3, SLmap, byid=TRUE)) >= 2)
-    SLmap[-ii]
-}
-
-## Put it all together:
-Recenter <- function(lon_0 = -100, grid=FALSE, ...) {                        
-    SLmap <- makeSLmap()
-    SLmap2 <- sliceAtAntipodes(SLmap, lon_0)
-    recenterAndClean(SLmap2, lon_0)
-}
-
-## Try it out
-par(mfrow=c(2,2), mar=rep(1, 4))
-plot(Recenter(-90), col="grey40"); box() ## Centered on 90w 
-plot(Recenter(0),   col="grey40"); box() ## Centered on prime meridian
-plot(Recenter(90),  col="grey40"); box() ## Centered on 90e
-plot(Recenter(180), col="grey40"); box() ## Centered on International Date Line
+ggplot() +
+  geom_spatvector(data = land_sf_90_offset, col = NA, color = 'black', fill = 'seashell1')
 ```
+
+
+
+
 
 
 
