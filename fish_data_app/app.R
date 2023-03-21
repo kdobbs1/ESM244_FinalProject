@@ -312,7 +312,7 @@ map_stress_range <- function(species_name, stressor_name, region_name) {
   species_stress_df <- as.data.frame(x = product_rast, xy = TRUE) %>%
     rename_with(.cols = 3, ~ 'species_stress')
   stressor_df <- as.data.frame(x = inverse_product_rast, xy = TRUE) %>%
-    rename_with(.cols = 3, ~ 'stress')
+    rename_with(.cols = 3, ~ 'stressor')
   
   # ggplot() + geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress))
   
@@ -323,7 +323,7 @@ map_stress_range <- function(species_name, stressor_name, region_name) {
       geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
       scale_fill_gradient(low = 'white', high = 'red4') +
       new_scale_fill() +
-      geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+      geom_tile(data = stressor_df, aes(x = x, y = y, fill = stressor)) +
       scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
       theme(panel.grid.major = element_blank(),
             panel.grid.minor = element_blank()) +
@@ -333,7 +333,7 @@ map_stress_range <- function(species_name, stressor_name, region_name) {
       geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
       scale_fill_gradient(low = 'white', high = 'red4') +
       new_scale_fill() +
-      geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+      geom_tile(data = stressor_df, aes(x = x, y = y, fill = stressor)) +
       scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
       theme(panel.grid.major = element_blank(),
             panel.grid.minor = element_blank()) +
@@ -526,7 +526,7 @@ ui <- fluidPage(
                                                   "Atlantic mackerel"="scomber scombrus",
                                                   "Yellowfin tuna"="thunnus albacares",
                                                   "Largehead hairtail"="trichiurus lepturus"),
-                                      selected = 'Rainbow trout'
+                                      selected = 'oncorhynchus mykiss'
                                       ),
                           selectInput(inputId = "pick_stressor4",
                                       label = "Choose stressor:",
@@ -550,7 +550,7 @@ ui <- fluidPage(
                                                   "Indian"="indian",
                                                   "North Atlantic"="atlantic_n",
                                                   "South Atlantic"="atlantic_s"),
-                                      selected = 'World'),
+                                      selected = 'world'),
                           
                         ),
                         
