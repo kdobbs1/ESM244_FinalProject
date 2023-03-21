@@ -174,6 +174,18 @@ merge2<-dplyr::full_join(merge, meow, by = c("meow_rgns_mol"="eco_code_x")) %>%
   group_by(realm) %>% 
   summarize(across(.cols=bycatch_benthic_2017:uv_radiation_2020, .fns=mean))
 ```
+### Define region limits in list of lists
+```{r}
+# items are region name, globe rotate T/F, longitude lower, longitude upper, latitude lower, latitude upper
+pacific_nw <- c('Northwest Pacific', T, , , , )
+pacific_ne 
+pacific_sw
+
+regions_list <- c(pacific_nw = pacific_nw, 
+                  pacific_ne = pacific_ne, 
+                  )
+```
+
 
 
 ### base layer
@@ -187,6 +199,16 @@ land_sf_crs <- land_sf %>% st_as_sf(crs = 4326)
 land_sf_vect <- land_sf_crs %>%  vect()
 land_sf_rotated <- land_sf_crs %>% vect() %>% terra::rotate()
 ```
+
+### preload ggplot
+```{r}
+land_sf_plot <- ggplot() +
+    geom_spatvector(data = land_sf_vect, col = NA, color = 'black', fill = 'seashell1')
+
+land_sf_plot_rotated <- ggplot() +
+    geom_spatvector(data = land_sf_rotated, col = NA, color = 'black', fill = 'seashell1')
+```
+
 
 
 Make rasters with function named map_stress_range
@@ -275,6 +297,8 @@ map_stress_range <- function(species_name, stressor_name) {
     rename_with(.cols = 3, ~ 'species_stress')
   stressor_df <- as.data.frame(x = inverse_product_rast_rotated, xy = TRUE) %>%
     rename_with(.cols = 3, ~ 'stress')
+  
+  if (rotate_globe == T) 
   species_stress_map <- ggplot() +
     geom_spatvector(data = land_sf_rotated, col = NA, color = 'black', fill = 'seashell1') +
     geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
@@ -312,6 +336,9 @@ map_raw
 ```{r}
 stressor_choice <- c('ocean_acidification')
 species_choice <- 'engraulis japonicus'
+
+# initialize and set region rotate
+rotate_globe <- F
 
 # format inputs for feeding to file chains
 species_choice_formatted <- sub(' ', '_', tolower(species_choice))
@@ -383,7 +410,6 @@ inverse_product_rast <- terra::mask(stressor_rast, product_rast, inverse=TRUE)
 
 ##### Rotate data if necessary for selected region
 long_shift <- 0
-land_sf_rotated <- land_sf_crs %>% vect() %>% terra::rotate()
 product_rast_rotated <- product_rast %>% terra::rotate()
 inverse_product_rast_rotated <- inverse_product_rast %>% terra::rotate()
 
@@ -396,8 +422,9 @@ stressor_df <- as.data.frame(x = inverse_product_rast_rotated, xy = TRUE) %>%
 # ggplot() + geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress))
 
 ######### Actually make the plot ##########
-species_stress_map <- ggplot() +
-  geom_spatvector(data = land_sf_rotated, col = NA, color = 'black', fill = 'seashell1') +
+# two cases for whether the inverted globe is needed
+if (invert_globe == T) {
+  species_stress_map <- land_sf_plot_rotated +
   geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
   scale_fill_gradient(low = 'white', high = 'red4') +
   new_scale_fill() +
@@ -406,6 +433,18 @@ species_stress_map <- ggplot() +
   theme(panel.grid.major = element_blank(),
       panel.grid.minor = element_blank()) +
   theme_minimal()
+} else {
+  species_stress_map <- land_sf_plot +
+  geom_tile(data = species_stress_df, aes(x = x, y = y, fill = species_stress)) +
+  scale_fill_gradient(low = 'white', high = 'red4') +
+  new_scale_fill() +
+  geom_tile(data = stressor_df, aes(x = x, y = y, fill = stress)) +
+  scale_fill_gradient(low = 'white', high = 'deepskyblue4') +
+  theme(panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()) +
+  theme_minimal()
+}
+
 
 species_stress_map
 ```
