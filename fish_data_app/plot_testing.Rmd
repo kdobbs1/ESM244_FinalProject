@@ -337,12 +337,12 @@ We want to have a base color opacity for the species range equal to the vulnerab
 It might be best to make a series of raster files to reflect the color options we want. For example, for 1 species, we would need 2 rasters: 1 for stressor area EXCLUDING stressor overlap with species range, then 1 for species range INCLUDING overlap with stressor area. The species range should then be able to range in color from a minimum that reflects the base vulernability and the scaling with stressor exposure.
 
 ```{r}
-stressor_choice <- c('ocean_acidification')
-species_choice <- 'engraulis japonicus'
-
-map_raw <- map_stress_range(species_name = species_choice, stressor_name = stressor_choice)
-
-map_raw
+# stressor_choice <- c('ocean_acidification')
+# species_choice <- 'engraulis japonicus'
+# 
+# map_raw <- map_stress_range(species_name = species_choice, stressor_name = stressor_choice)
+# 
+# map_raw
 ```
 
 
@@ -351,11 +351,11 @@ stressor_choice <- c('ocean_acidification')
 species_choice <- 'engraulis japonicus'
 
 # initialize and set region variables
-rotate_globe <- F
+rotate_globe <- T
 long_lower <- -90
 long_upper <- 0
 lat_lower <- 0
-lat_upper <- 30
+lat_upper <- 60
 
 # format inputs for feeding to file chains
 species_choice_formatted <- sub(' ', '_', tolower(species_choice))
